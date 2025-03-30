@@ -1,7 +1,6 @@
 'use client';
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import {get} from "js-cookie"; 
 import Cookies from "js-cookie";
 
 const Header = () => {
@@ -45,24 +44,24 @@ const Header = () => {
                     </nav>
                 </div>
 
-                {/* Search */}
-                <div className="flex items-center gap-5 mr-9">
-                    <div className="gap-2 flex items-center">
+                {/* Account */}
+                <div className={`flex items-center gap-5 mr-9 `} id="account">
+                    <div className={`flex items-center gap-2 rounded-md ${searchVisible ? "bg-white" : "bg-[#f5f5f5]"}`}>
                         <input
                             type="text"
-                            placeholder="Search..."
-                            className={`border-2 border-gray-300 rounded-md p-2 ${searchVisible ? "visible" : "invisible"
+                            placeholder="What are you looking for?"
+                            className={`w-64 p-2 outline-none ${searchVisible ? "visible" : "invisible"
                                 }`}
                         />
 
-                        <button onClick={visibleSearchBar} className="flex items-center justify-center">
+                        <button onClick={visibleSearchBar} className="flex items-center justify-center cursor-pointer">
                             <Image src="/icons/searchic.png" alt="search" height={25} width={25} />
                         </button>
                     </div>
-                    <button>
+                    <button className="cursor-pointer">
                         <Image src="/icons/cartic.png" alt="search" height={25} width={25} />
                     </button>
-                    <button>
+                    <button className="cursor-pointer">
                         <Image src="/icons/wishlistic.png" alt="search" height={25} width={25} />
                     </button>
                     <div className="flex items-center gap-2 text-[#FF8200] font-montserrat font-bold">

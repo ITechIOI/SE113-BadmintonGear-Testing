@@ -54,7 +54,7 @@ const Header = () => {
                                 }`}
                         />
 
-                        <button onClick={visibleSearchBar} className="flex items-center justify-center cursor-pointer">
+                        <button onClick={visibleSearchBar} className="flex items-center justify-center cursor-pointer pr-4">
                             <Image src="/icons/searchic.png" alt="search" height={25} width={25} />
                         </button>
                     </div>

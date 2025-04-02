@@ -37,9 +37,9 @@ const Header = () => {
                     <nav>
                         <ul className="flex gap-4 text-lg font-montserrat font-bold text-[#737373] ml-auto" id="nav">
                             <li><a className="hover:text-[#252B42]" href="/">Home</a></li>
-                            <li><a className="hover:text-[#252B42]" href="/about">Chat</a></li>
-                            <li><a className="hover:text-[#252B42]" href="/products">Contact</a></li>
-                            <li><a className="hover:text-[#252B42]" href="/contact">About</a></li>
+                            <li><a className="hover:text-[#252B42]" href="/chat">Chat</a></li>
+                            <li><a className="hover:text-[#252B42]" href="/contact">Contact</a></li>
+                            <li><a className="hover:text-[#252B42]" href="/about">About</a></li>
                         </ul>
                     </nav>
                 </div>

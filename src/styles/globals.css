@@ -18,3 +18,12 @@ body {
   color: #252B42;
   font-family: Poppins, Montserrat, sans-serif;
 }
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

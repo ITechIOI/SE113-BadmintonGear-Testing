@@ -4,6 +4,8 @@ import Image from 'next/image';
 import CartItem from '@/components/CartItem';
 
 export default function Cart() {
+    const subtotal = 0; // calculate subtotal from items in cart
+    const shipping = 0; // calculate shipping from items in cart
     const [isAllChecked, setIsAllChecked] = useState(false); // Trạng thái checkbox của thead
     const [items, setItems] = useState([
         { id: "1", product: "Product 1", image: "/images/product1.png", discount: 5, price: 50, stockStatus: true, quantity: 1, isChecked: false },
@@ -74,6 +76,29 @@ export default function Cart() {
                 >
                     Return to Shopping
                 </button>
+                <div className='flex justify-between items-start mt-5'>
+                    <div className='flex w-1/2'>
+                        <input type='text' placeholder='Coupon Code' className='border border-gray-500 rounded-xs px-4 py-3 w-3/5' />
+                        <button className='bg-[#FF8200] text-white rounded-xs px-10 py-3 ml-5'>Apply Coupon</button>
+                    </div>
+                    <div className='w-1/3 border-2 rounded-md px-10 py-5 flex flex-col'>
+                        <label className='w-full text-lg font-medium mb-5 text-center'>Cart Total</label>
+                        <div className='border-b border-gray-500 flex justify-between pb-3 mb-3'>
+                            <p className='text-left'>Subtotal:</p>
+                            <p className='text-right'>${subtotal}</p>
+                        </div>
+                        <div className='border-b border-gray-500 flex justify-between pb-3 mb-3'>
+                            <p className='text-left'>Shipping:</p>
+                            <p className='text-right'>{shipping === 0 ? "Free" : `$${shipping}`}</p>
+                        </div>
+                        <div className='flex justify-between mb-3'>
+                            <p className='text-left'>Total:</p>
+                            <p className='text-right'>${subtotal + shipping}</p>
+                        </div>
+                        <button className='bg-[#FF8200] text-white rounded-xs px-10 py-3 mt-5 w-fit mx-auto'
+                            onClick={() => window.location.href = "/checkout"}>Process To Check Out</button>
+                    </div>
+                </div>
             </div>
         </div>
     );

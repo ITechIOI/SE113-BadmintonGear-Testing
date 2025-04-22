@@ -63,7 +63,7 @@ const Header = () => {
                             <Image src="/icons/searchic.png" alt="search" height={25} width={25} />
                         </button>
                     </div>
-                    <button className="cursor-pointer">
+                    <button className="cursor-pointer" onClick={() => window.location.href = "/cart"}>
                         <Image src="/icons/cartic.png" alt="search" height={25} width={25} />
                     </button>
                     <button className="cursor-pointer">

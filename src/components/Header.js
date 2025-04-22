@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 
 const Header = () => {
     const [searchVisible, setSearchVisible] = useState(false);
+    const [menuVisible, setMenuVisible] = useState(false);
     const [user, setUser] = useState(null); // State để lưu thông tin người dùng
 
     // Kiểm tra cookie khi component được mount
@@ -21,6 +22,10 @@ const Header = () => {
 
     const visibleSearchBar = () => {
         setSearchVisible(!searchVisible);
+    };
+
+    const visibleMennu = () => {
+        setMenuVisible(!menuVisible);
     };
 
     return (
@@ -66,15 +71,31 @@ const Header = () => {
                     </button>
                     <div className="flex items-center gap-2 text-[#FF8200] font-montserrat font-bold">
                         {
-                            user ? (<>
-                                <Image src="/icons/accountic.png" alt="account" height={25} width={25}/>
+                            user ? (<div className="flex items-center gap-2"
+                                onClick={visibleMennu}>
+                                <Image src="/icons/accountic.png" alt="account" height={25} width={25} />
                                 <a id="account" href="/account">{user.username}</a>
-                            </>):(<>
-                                <Image src="/icons/accountic.png" alt="account" height={25} width={25}/>
+                            </div>) : (<div className="flex items-center gap-2">
+                                <Image src="/icons/accountic.png" alt="account" height={25} width={25} />
                                 <a id="login" href="/login">Register / Login</a>
-                            </>)
+                            </div>)
                         }
                     </div>
+                    {menuVisible && (
+                        <div className="absolute right-8 top-15 px-5 py-5 bg-[#000000ee] rounded-md text-[#FF8200] cursor-pointer" onClick={visibleMennu}>
+                            <div className="mb-5 flex items-center gap-2">
+                                <Image src="/icons/accountic.png" alt="account" height={25} width={25} />
+                                <span>Manage My Account</span>
+                            </div>
+                            <div className="mb-5 flex items-center gap-2">
+                                <Image src="/icons/orderic.png" alt="order" height={25} width={25} />
+                                <span>My Orders</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Image src="/icons/logoutic.png" alt="logout" height={25} width={25} />
+                                <span>Log out</span>
+                            </div>
+                        </div>)}
                 </div>
             </div>
         </header>

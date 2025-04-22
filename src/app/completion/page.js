@@ -3,19 +3,13 @@ import React, { useState, useEffect } from 'react'
 import Cookies from "js-cookie";
 import OrderItem from '@/components/OrderItem';
 
-export default function OrderPage() {
+export default function CompletionOrderPage() {
     const [order, setOrder] = useState([
-        { id: "1", total: 345, state: "Done" },
-        { id: "2", total: 123, state: "Cancelled" },
-        { id: "3", total: 456, state: "On Delivery" },
-        { id: "4", total: 789, state: "Done" },
-        { id: "5", total: 234, state: "Cancelled" },
-        { id: "6", total: 567, state: "On Delivery" },
-        { id: "7", total: 890, state: "Done" },
-        { id: "8", total: 345, state: "Cancelled" },
-        { id: "9", total: 678, state: "On Delivery" },
-        { id: "10", total: 901, state: "Done" },
-    ]); // Khởi tạo state cho danh sách dơn hàng
+        { id: "1", total: 123, state: "Done" },
+        { id: "2", total: 789, state: "Done" },
+        { id: "3", total: 234, state: "Done" },
+        { id: "4", total: 567, state: "Done" },
+    ]); // Khởi tạo state cho danh sách dơn hàng đã giao hàng thành công
     const [user, setUser] = useState(null);
     useEffect(() => {
         const storedUser = Cookies.get("user"); // Lấy thông tin người dùng từ cookie
@@ -40,16 +34,16 @@ export default function OrderPage() {
                         <a href='/account' >My Profile</a>
                         <a href='address' >Address Book</a>
                     </div>
-                    <a href='/order' className='text-[#ff8200]'>My Orders</a>
+                    <a href='/order'>My Orders</a>
                     <div className='text-gray-500 font-normal ml-3 flex flex-col gap-2'>
-                        <a href='/completion'>My Completions</a>
+                        <a href='/completion'  className='text-[#ff8200]'>My Completions</a>
                         <a href='/cancellation'>My Cancellations</a>
                     </div>
                     <a href='/wishlist'>My WishList</a>
                     <a href='/promotion'>My Promotions</a>
                 </div>
                 <div className='w-full bg-white pb-10'>
-                    <p className='text-[#ff8200] text-xl mt-10 w-4/5 mx-auto'>My Orders</p>
+                    <p className='text-[#ff8200] text-xl mt-10 w-4/5 mx-auto'>My Completions</p>
 
                     <table className='w-full mt-5 border-separate border-spacing-y-5'>
                         <thead>

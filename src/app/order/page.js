@@ -29,7 +29,7 @@ export default function OrderPage() {
                 <div id="roadmap" className="flex items-center ml-15">
                     <a className="text-gray-500" href="/">Home</a>
                     <label className="ml-3 mr-3">/</label>
-                    <a className="text-black" href="/cart">Cart</a>
+                    <a className="text-black" href="/order">My Orders</a>
                 </div>
                 <div >Welcome! <span className='text-[#ff8200]'>{user ? `${user.username} !` : ""}</span></div>
             </div>

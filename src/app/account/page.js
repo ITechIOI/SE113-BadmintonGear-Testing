@@ -58,9 +58,9 @@ export default function Account() {
                             <input type="text" className='bg-gray-100 rounded-xs p-2' placeholder='New Password'/>
                             <input type="text" className='bg-gray-100 rounded-xs p-2' placeholder='Confirm New Password'/>
                         </div>
-                        <div className='flex justify-end gap-5 items-center mt-5'>
+                        <div className='flex justify-end gap-5 items-center mt-5 mr-5'>
                             <button className='px-4 py-2 rounded-xs'>Cancel</button>
-                            <button className='bg-[#ff8200] text-white px-4 py-2 rounded-xs'>Save Chanegs</button>
+                            <button className='bg-[#ff8200] text-white px-4 py-2 rounded-xs'>Save Changes</button>
                         </div>
                     </div>
 

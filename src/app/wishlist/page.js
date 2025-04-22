@@ -5,7 +5,12 @@ export default function WishList() {
     const number = 7;
     return (
         <div>
-            <div className='w-full flex justify-between px-20 items-center pt-10 font-medium'>
+            <div id="roadmap" className="flex items-center mt-10 ml-15">
+                <a className="text-gray-500" href="/">Home</a>
+                <label className="ml-3 mr-3">/</label>
+                <a className="text-black" href="/wishlist">Wishlist</a>
+            </div>
+            <div className='w-full flex justify-between px-20 items-center pt-5 font-medium'>
                 <p className='text-xl'>Wishlist ({number})</p>
                 <button className='border rounded-xs px-10 py-3 hover:bg-[#FF8200] hover:text-white transition-all duration-300 ease-in-out'>Move All To Cart</button>
             </div>
@@ -21,14 +26,9 @@ export default function WishList() {
                 </div>
             </div>
             <div className="mx-20 mb-5 border-b border-gray-300">
-                <div className="flex justify-between items-center py-5">
-                    <div className="flex items-center py-5">
-                        <div className="bg-[#FF8200] w-5 h-10 rounded-sm"></div>
-                        <div className="text-[#ff8200] ml-5 font-[600] text-xl">Just For You</div>
-                    </div>
-                    <button className='border rounded-xs px-10 py-3 hover:bg-[#FF8200] hover:text-white transition-all duration-300 ease-in-out'>
-                        See All
-                    </button>
+                <div className="flex items-center py-5">
+                    <div className="bg-[#FF8200] w-5 h-10 rounded-sm"></div>
+                    <div className="text-[#ff8200] ml-5 font-[600] text-xl">Just For You</div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 my-10 w-full h-auto mx-auto justify-items-center" >
                     <ProductCard product={{ id: "pro001", name: "Product 1", image: "/images/product1.png", price: 166, rating: 4, discount: 40 }} />

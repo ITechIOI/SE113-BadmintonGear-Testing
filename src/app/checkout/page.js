@@ -1,4 +1,5 @@
 import React from 'react'
+import CheckOutItem from '@/components/CheckOutItem';
 
 export default function CheckOut() {
     const subtotal = 0; // calculate subtotal from items in cart
@@ -17,8 +18,9 @@ export default function CheckOut() {
                 <div className='grid grid-col lg:grid-cols-2 gap-5 mt-5'>
                     <div>
                         {/* List of Product */}
-                        <div>
-
+                        <div className='w-2/3 mt-5'>
+                            <CheckOutItem item={{ product: "Product 1", image: "/images/product1.png", subtotal: 50 }} />
+                            <CheckOutItem item={{ product: "Product 2", image: "/images/product1.png", subtotal: 100 }} />
                         </div>
                         <div className='w-2/3 rounded-md py-5 flex flex-col'>
                             <div className='border-b border-gray-500 flex justify-between pb-3 mb-3'>

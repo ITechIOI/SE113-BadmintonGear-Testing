@@ -117,7 +117,7 @@ export default function Page() {
         </div>
         <div className="flex items-end mb-5">
           <p className="text-3xl font-bold mr-20">Flash Sales</p>
-          <TimeCountdown targetDate={new Date("2025-10-31T23:59:59")} />
+          <TimeCountdown targetDate={"2025-10-29T23:59:59"} />
           <div className="flex ml-auto">
             <Image onClick={scrollPrevious} src={"/icons/previousic.png"} alt="previous" width={25} height={25} />
             <Image onClick={scrollNext} src={"/icons/nextic.png"} alt="next" width={25} height={25} className="ml-5" />

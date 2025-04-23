@@ -2,11 +2,46 @@
 import React, { useState } from 'react'
 import Image from 'next/image';
 import { ProductCard } from '@/components/ProductCard';
+import ReviewItem from '@/components/ReviewItem';
 
-export default function ProductPage(id) {
+export default function ProductPage() {
+    const [descriptionVisible, setDescriptionVisible] = useState(true); // State to control the visibility of the description
+    const [additionalInfoVisible, setAdditionalInfoVisible] = useState(false); // State to control the visibility of the additional information
+    const [reviewsVisible, setReviewsVisible] = useState(false); // State to control the visibility of the reviews
     const [count, setCount] = useState(1);
-    const [product, setProduct] = useState({ id: "1", name: "Product 1", rating: 4, price: 100, description: "This is product 1", discount: 5, category: "Rackets", stockState: true }); // Khởi tạo state cho sản phẩm
+    const [product, setProduct] = useState({
+        id: "1",
+        name: "Product 1",
+        rating: 4, price: 100,
+        description: "This is product 1",
+        discount: 5, category: "Rackets",
+        stockState: true,
+        additionaInfo: "This is additional information about product 1",
+        reviews: [{ id: 1, username: "User 1", rating: 4, comment: "Great product!", date: "2023-10-01" },
+        { id: 2, username: "User 2", rating: 5, comment: "Excellent!", date: "2023-10-02" },
+        { id: 3, username: "User 3", rating: 3, comment: "Good value for money.", date: "2023-10-03" },],
+        image: "/images/product1.png"
+    }); // Khởi tạo state cho sản phẩm
     const currentPrice = product.price - (product.price * product.discount / 100); // Tính giá hiện tại của sản phẩm
+
+    const handleDescriptionClick = () => {
+        setDescriptionVisible(true);
+        setAdditionalInfoVisible(false);
+        setReviewsVisible(false);
+    }
+
+    const handleAdditionalInfoClick = () => {
+        setDescriptionVisible(false);
+        setAdditionalInfoVisible(true);
+        setReviewsVisible(false);
+    }
+
+    const handleReviewsClick = () => {
+        setDescriptionVisible(false);
+        setAdditionalInfoVisible(false);
+        setReviewsVisible(true);
+    }
+
     return (
         <div>
             <div id="roadmap" className="flex items-center mt-10 ml-15">
@@ -92,7 +127,36 @@ export default function ProductPage(id) {
                     </div>
 
                 </div>
-                <div className='h-fit  border-b border-gray-500 pb-5'></div>
+                <div className='h-fit  border-b border-gray-500 pb-5'>
+                    <div className='flex items-center justify-center mx-40 gap-20 text-lg'>
+                        <p className={descriptionVisible ? "font-semibold" : ""}
+                            onClick={handleDescriptionClick}>Description</p>
+                        <p className={additionalInfoVisible ? "font-semibold" : ""}
+                            onClick={handleAdditionalInfoClick}>Additional Information</p>
+                        <p className={reviewsVisible ? "font-semibold" : ""}
+                            onClick={handleReviewsClick}>Reviews</p>
+                    </div>
+                    {descriptionVisible && (
+                        <div className='w-full mx-20 my-5 flex flex-col gap-5 items-center'>
+                            <p className='w-full'>{product.description}</p>
+                            <Image src="/images/product1.png" alt="Product Image" width={500} height={500} className="object-contain h-full" />
+                        </div>
+                    )}
+                    {additionalInfoVisible && (
+                        <div className='w-full mx-20 my-5 flex flex-col gap-5 items-center'>
+                            <p className='w-full'>{product.additionaInfo}</p>
+                        </div>
+                    )}
+                    {reviewsVisible && (
+                        <div className='w-full px-20 my-5 flex flex-col gap-5 items-center'>
+                            <p className='w-full text-lg font-semibold'>Reviews</p>
+                            {
+                                product.reviews.map((review) => (
+                                    <ReviewItem key={review.id} review={review} />
+                                ))}
+                        </div>
+                    )}
+                </div>
                 <div className="mx-20 mb-5 border-b border-gray-300">
                     <div className="flex items-center py-5">
                         <div className="bg-[#FF8200] w-5 h-10 rounded-sm"></div>
@@ -107,6 +171,7 @@ export default function ProductPage(id) {
                     </div>
                 </div>
             </div>
-        </div >
+
+        </div>
     )
 }

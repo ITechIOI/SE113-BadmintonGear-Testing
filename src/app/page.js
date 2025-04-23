@@ -11,7 +11,7 @@ export default function Page() {
   const [brand, setBrand] = useState("All");
   const [rating, setRating] = useState(0);
   const [availability, setAvailability] = useState("All");
-  const listOfCategories = ["All", "Electronics", "Fashion", "Home", "Beauty", "Sports"];
+  const listOfCategories = ["All", "Rackets", "Shuttlecock", "Shoes", "Clothes", "Bags", "Others"];
   const listOfBrands = ["All", "Nike", "Adidas", "Puma", "Reebok", "Under Armour"];
   const scrollContainerRef = useRef(null);
 
@@ -135,6 +135,11 @@ export default function Page() {
         <button className="px-10 py-3 mx-auto flex mb-5 bg-[#ff8200] rounded-md text-white">View All Products</button>
       </div>
 
+      {/* ---Filter Product --- */}
+      <div>
+
+      </div>
+
       {/* --- Category --- */}
       <div className="mx-20 mb-5 border-b border-gray-300">
         <div className="flex items-center py-5">
@@ -143,27 +148,33 @@ export default function Page() {
         </div>
         <p className="text-3xl font-bold mr-20">Browse By Category</p>
         <div className=" flex flex-wrap h-auto mx-auto justify-between my-10 " >
-          <div className="border flex flex-col items-center justify-center px-14 mr-5 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer">
+          <div className="border flex flex-col items-center justify-center px-14 mr-5 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
+            onClick={() => window.location.href = "/category?rackets"}>
             <Image src={"/icons/racketic.png"} alt="racket" width={100} height={100} className="mb-5" />
             <p>Rackets</p>
           </div>
-          <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer">
+          <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
+            onClick={() => window.location.href = "/category?shuttlecock"}>
             <Image src={"/icons/shuttlecockic.png"} alt="shuttlecock" width={80} height={80} className="mb-5" />
             <p>Shuttlecock</p>
           </div>
-          <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer">
+          <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
+            onClick={() => window.location.href = "/category?shoes"}>
             <Image src={"/icons/shoesic.png"} alt="shoes" width={80} height={80} className="mb-5" />
             <p>Shoes</p>
           </div>
-          <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer">
+          <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
+            onClick={() => window.location.href = "/category?clothes"}>
             <Image src={"/icons/clotheic.png"} alt="clothes" width={80} height={80} className="mb-5" />
             <p>Clothes</p>
           </div>
-          <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer">
+          <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
+            onClick={() => window.location.href = "/category?bags"}>
             <Image src={"/icons/bagic.png"} alt="bags" width={80} height={80} className="mb-5" />
             <p>Bags</p>
           </div>
-          <div className="border flex flex-col items-center justify-center px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer">
+          <div className="border flex flex-col items-center justify-center px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
+            onClick={() => window.location.href = "/category?others"}>
             <Image src={"/icons/otheric.png"} alt="others" width={80} height={80} className="mb-5" />
             <p>Others</p>
           </div>

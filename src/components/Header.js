@@ -66,7 +66,8 @@ const Header = () => {
                     <button className="cursor-pointer" onClick={() => window.location.href = "/cart"}>
                         <Image src="/icons/cartic.png" alt="search" height={25} width={25} />
                     </button>
-                    <button className="cursor-pointer">
+                    <button className="cursor-pointer" onClick={() => window.location.href = "/wishlist"}>
+
                         <Image src="/icons/wishlistic.png" alt="search" height={25} width={25} />
                     </button>
                     <div className="flex items-center gap-2 text-[#FF8200] font-montserrat font-bold">

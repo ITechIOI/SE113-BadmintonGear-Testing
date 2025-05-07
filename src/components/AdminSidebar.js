@@ -34,8 +34,8 @@ export default function Sidebar() {
                 </a>
                 <div>
                     <div className={`flex justify-between items-center px-2 py-2
-                        ${pathname.startsWith("/admin/product/") ? "rounded-md text-[#ff8200] bg-[#FBE3CA]" : (pathname === "/admin/product" ? "bg-[#ff8200] rounded-md text-white" : "text-gray-600")
-                        } hover:bg-[#ff8200] hover:text-white transition duration-300 rounded-md *:${pathname.startsWith("/admin/product/") ? "text-[#ff8200]" : ""} 
+                        ${pathname.startsWith("/admin/product") ? "rounded-md text-[#ff8200] bg-[#FBE3CA]" : (pathname === "/admin/product" ? "bg-[#ff8200] rounded-md text-white" : "text-gray-600")
+                        } hover:bg-[#ff8200] hover:text-white transition duration-300 rounded-md *:${pathname.startsWith("/admin/product") ? "text-[#ff8200] " : ""} 
                         ${pathname === "/admin/product" ? "text-white" : ""}`}>
                         <a
                             href="/admin/productlist"

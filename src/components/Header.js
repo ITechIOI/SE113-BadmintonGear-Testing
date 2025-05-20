@@ -29,7 +29,7 @@ const Header = () => {
     };
 
     return (
-        <header>
+        <header className="">
             <div className="flex justify-between items-center w-full p-4 ml-5">
                 {/* Logo */}
                 <div className="flex items-center cursor-pointer" id="logo" onClick={hancleLogoClick}>

@@ -13,7 +13,7 @@ const Footer = () => {
             }
         }, []);
     return (
-        <footer className="bg-[#FF8200] text-white py-4 mt-10 ">
+        <footer className="bg-[#FF8200] text-white py-4 mt-15 relative bottom-0 w-full">
             <div className="container flex justify-center mx-auto px-4">
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-6 m-10">
                     {/* Cột 1 */}

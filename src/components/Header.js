@@ -1,20 +1,32 @@
 'use client';
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import Cookies from "js-cookie";
+import { useRouter } from 'next/navigation';
+import Cookies from "js-cookie"; // Sử dụng js-cookie để quản lý cookie
 
 const Header = () => {
     const [searchVisible, setSearchVisible] = useState(false);
     const [menuVisible, setMenuVisible] = useState(false);
     const [user, setUser] = useState(null); // State để lưu thông tin người dùng
+    const router = useRouter();
 
     // Kiểm tra cookie khi component được mount
     useEffect(() => {
-        const storedUser = Cookies.get("user"); // Lấy thông tin người dùng từ cookie
-        if (storedUser) {
-            setUser(storedUser); // Nếu có dữ liệu, cập nhật state `user`
+        const profile = JSON.parse(localStorage.getItem('user_profile'));
+        if (profile) {
+            setUser(profile);
         }
     }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('access_token'); // Xóa token khỏi localStorage
+        localStorage.removeItem('user_profile'); // Xóa thông tin người dùng khỏi localStorage
+        Cookies.remove('role'); // Xóa cookie roles
+        Cookies.remove('access_token'); // Xóa cookie access_token
+        setUser(null); // Cập nhật state người dùng
+        router.push('/'); // Chuyển hướng đến trang đăng nhập
+
+    } 
 
     const hancleLogoClick = () => {
         window.location.href = "/";
@@ -92,7 +104,8 @@ const Header = () => {
                                 <Image src="/icons/orderic.png" alt="order" height={25} width={25} />
                                 <span>My Orders</span>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2"
+                                onClick={handleLogout}>
                                 <Image src="/icons/logoutic.png" alt="logout" height={25} width={25} />
                                 <span>Log out</span>
                             </div>

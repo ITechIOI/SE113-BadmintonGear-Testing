@@ -1,8 +1,10 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useEffect, use } from 'react'
 import CustomerItem from '@/components/CustomerItem';
+import { getAllUsers } from '@/api/userApi';
 
 export default function CustomerPage() {
+    const [page, setPage] = useState(0);
     const [customers, setCustomers] = useState([
         {
             id: 1,
@@ -32,6 +34,21 @@ export default function CustomerPage() {
             createdAt: "2023-03-01",
         },
     ]);
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            try {
+                const response = await getAllUsers(page);
+                if (response && response.data) {
+                    setCustomers(response.data);
+                } else {
+                    console.error("No customer data found");
+                }
+            } catch (error) {
+                console.error("Error fetching customers:", error);
+            }
+        };
+        fetchCustomers();
+    }, []);
 
     return (
         <div className='font-inter'>

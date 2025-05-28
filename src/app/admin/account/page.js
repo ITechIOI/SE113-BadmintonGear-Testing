@@ -60,17 +60,18 @@ export default function Account() {
         const publicId = getPublicIdFromAvatar(user.avatar); // Lấy publicId từ URL
         if (publicId) {
             try {
-                const response = await deleteImage(publicId);
-                if (response.success) {
+                const deleteData = {
+                    publicId: publicId,
+                    type: "image"
+                }
+                const response = await deleteImage(deleteData);
+                if (response) {
                     setUser({ ...user, avatar: null }); // Cập nhật state user để xóa avatar
                     setAvatarPreview(null); // Xóa preview
                     setImageMenu(false); // Ẩn menu
-                } else {
-                    alert("Failed to delete image. Please try again.");
                 }
             } catch (err) {
                 console.error("Error deleting image:", err);
-                alert("Failed to delete image. Please try again.");
             }
         }
     }

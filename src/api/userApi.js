@@ -85,39 +85,37 @@ const updateUser = async (userData) => {
 
 const uploadImage = async (file) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/users/cloudinary/upload`;
-    const token = localStorage.getItem('access_token');
     const formData = new FormData();
     formData.append('image', file);
     const response = await fetch(url, {
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`
-        },
         body: formData
     });
     if (!response.ok) {
-        console.error('Failed to upload image');
+        alert('Failed to upload image');
+        return null;
     }
-    const data = await response.json();
+    const data = await response.text();
     return data;
 }
 
-const deleteImage = async (publicId) => {
+const deleteImage = async (deleteData) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/users/cloudinary/upload`;
     const token = localStorage.getItem('access_token');
     const response = await fetch(url, {
-        method: 'DELETE',
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ publicId })
+        body: JSON.stringify(deleteData)
     });
-    if (!response.ok) {
+    if (response.text()!=="Image deleted successfully") {
+        alert('Failed to delete image');
         console.log('Failed to delete image');
+        return false
     }
-    const data = await response.json();
-    return data;
+    return true;
 }
 
 export { getAllUsers, getProfile, updateUser, createUser, uploadImage, deleteImage };

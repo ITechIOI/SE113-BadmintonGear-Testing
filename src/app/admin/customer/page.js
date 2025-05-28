@@ -34,19 +34,19 @@ export default function CustomerPage() {
             createdAt: "2023-03-01",
         },
     ]);
-    useEffect(() => {
-        const fetchCustomers = async () => {
-            try {
-                const response = await getAllUsers(page);
-                if (response && response.data) {
-                    setCustomers(response.data);
-                } else {
-                    console.error("No customer data found");
-                }
-            } catch (error) {
-                console.error("Error fetching customers:", error);
+    const fetchCustomers = async () => {
+        try {
+            const response = await getAllUsers(page);
+            if (response && response.data) {
+                setCustomers(response.data);
+            } else {
+                console.error("No customer data found");
             }
-        };
+        } catch (error) {
+            console.error("Error fetching customers:", error);
+        }
+    };
+    useEffect(() => {
         fetchCustomers();
     }, []);
 

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { login } from "@/api/authApi";
 import Cookies from "js-cookie";
 import { getProfile } from "@/api/userApi";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 export default function Login() {
     const [error, setError] = useState(null); // State để lưu thông báo lỗi
@@ -42,7 +44,8 @@ export default function Login() {
     };
     return (
         <div className="w-full h-full">
-            <div className="flex items-center m-auto h-auto w-fit bg-[#FFFFF6] rounded-xl text-montserrat">
+            <Header />
+            <div className="flex items-center  m-auto my-20 h-auto w-fit bg-[#FFFFF6] rounded-xl text-montserrat">
                 <Image src="/images/loginimage.jpg" alt="image" width={350} height={400} className="rounded-xl" />
                 <div className="ml-10 mr-10 w-fit gap-5 ">
                     <form id="login-form" className="w-fit">
@@ -65,6 +68,7 @@ export default function Login() {
 
                 </div>
             </div>
+            <Footer />
         </div>
     )
 }

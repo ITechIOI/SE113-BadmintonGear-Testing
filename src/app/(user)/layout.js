@@ -28,7 +28,7 @@ export const metadata = {
 
 };
 
-export default function RootLayout({ children }) {
+export default function UserLayout({ children }) {
   return (
     <html lang="en" className={`${poppins.variable} ${montserrat.variable}`}>
       <body className="antialiased ">

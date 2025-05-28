@@ -4,7 +4,6 @@ import "./admin.css";
 import Sidebar from "@/components/AdminSidebar";
 import AdminHeader from "@/components/AdminHeader";
 export const metadata = {
-    layout: false, // Tắt layout gốc
     title: "BadmintonGear",
     description: "BadmintonGear Store",
     icons: {

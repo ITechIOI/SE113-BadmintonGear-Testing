@@ -23,10 +23,11 @@ const Header = () => {
         localStorage.removeItem('user_profile'); // Xóa thông tin người dùng khỏi localStorage
         Cookies.remove('role'); // Xóa cookie roles
         Cookies.remove('access_token'); // Xóa cookie access_token
+        localStorage.removeItem('password'); // Xóa mật khẩu khỏi localStorage
         setUser(null); // Cập nhật state người dùng
         router.push('/'); // Chuyển hướng đến trang đăng nhập
 
-    } 
+    }
 
     const hancleLogoClick = () => {
         window.location.href = "/";
@@ -35,6 +36,11 @@ const Header = () => {
     const visibleSearchBar = () => {
         setSearchVisible(!searchVisible);
     };
+
+    function getAvatarLink(avatar) {
+        if (!avatar) return "";
+        return avatar.split(" ")[0];
+    }
 
     const visibleMennu = () => {
         setMenuVisible(!menuVisible);
@@ -86,7 +92,7 @@ const Header = () => {
                         {
                             user ? (<div className="flex items-center gap-2"
                                 onClick={visibleMennu}>
-                                <Image src="/icons/accountic.png" alt="account" height={25} width={25} />
+                                <Image src={user && user.avatar ? getAvatarLink(user.avatar) : "/images/noavatar.png"} alt="account" height={25} width={25} />
                                 <a id="account" href="/account">{user.username}</a>
                             </div>) : (<div className="flex items-center gap-2">
                                 <Image src="/icons/accountic.png" alt="account" height={25} width={25} />

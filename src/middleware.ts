@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 export function middleware(request) {
     const { pathname } = request.nextUrl;
-    console.log("Middleware is running for path:", pathname, "with cookies:", request.cookies);
     const role = request.cookies.get("role")?.value;
     const token = request.cookies.get("access_token")?.value;
 

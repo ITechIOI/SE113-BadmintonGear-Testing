@@ -31,7 +31,8 @@ const getProfile = async()=>{
     });
 
     if (!response.ok) {
-        console.error('Failed to fetch profile');
+        console.log('Failed to fetch profile');
+        return null;
     }
 
     const data = await response.json();
@@ -56,4 +57,67 @@ const createUser = async (userData) => {
     return data;
 }
 
-export { getAllUsers, getProfile };
+const updateUser = async (userData) => {
+    console.log(userData);
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/users/users`;
+    const token = localStorage.getItem('access_token');
+    console.log(token);
+    const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(userData)
+    });
+
+    if (!response.ok) {
+        alert('Failed to update user');
+        console.log('Failed to update user');
+        return null;
+    }
+
+    const data = await response;
+    console.log(data);
+    alert('User updated successfully');
+    return data;
+}
+
+const uploadImage = async (file) => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/users/cloudinary/upload`;
+    const token = localStorage.getItem('access_token');
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+        body: formData
+    });
+    if (!response.ok) {
+        console.error('Failed to upload image');
+    }
+    const data = await response.json();
+    return data;
+}
+
+const deleteImage = async (publicId) => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/users/cloudinary/upload`;
+    const token = localStorage.getItem('access_token');
+    const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ publicId })
+    });
+    if (!response.ok) {
+        console.log('Failed to delete image');
+    }
+    const data = await response.json();
+    return data;
+}
+
+export { getAllUsers, getProfile, updateUser, createUser, uploadImage, deleteImage };

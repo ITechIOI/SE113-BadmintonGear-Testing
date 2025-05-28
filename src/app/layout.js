@@ -1,5 +1,5 @@
 import { Poppins, Montserrat } from "next/font/google";
-import "../../styles/globals.css";
+import "../styles/globals.css";
 
 // Cấu hình phông chữ Poppins
 const poppins = Poppins({

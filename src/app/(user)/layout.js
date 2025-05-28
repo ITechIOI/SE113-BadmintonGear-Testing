@@ -25,19 +25,18 @@ export const metadata = {
     shortcut: "/images/logo.ico",
     apple: "/images/logo.ico",
   },
-
 };
 
 export default function UserLayout({ children }) {
   return (
-    <html lang="en" className={`${poppins.variable} ${montserrat.variable}`}>
-      <body className="antialiased ">
+    <>
+      <div className={`${poppins.variable} ${montserrat.variable}`}>
         <Header />
         <div className="mt-10 mb-10">
           {children}
         </div>
         <Footer />
-      </body>
-    </html>
+      </div>
+    </>
   );
 }

@@ -15,6 +15,7 @@ export default function AdminHeader() {
         localStorage.removeItem('user_profile'); // Xóa thông tin người dùng khỏi localStorage
         Cookies.remove('role'); // Xóa cookie roles
         Cookies.remove('access_token'); // Xóa cookie access_token
+        localStorage.removeItem('password'); // Xóa mật khẩu khỏi localStorage
         setUser(null); // Cập nhật state người dùng
         router.push('/login'); // Chuyển hướng đến trang đăng nhập
     }
@@ -26,6 +27,11 @@ export default function AdminHeader() {
     const visibleMennu = () => {
         setMenuVisible(!menuVisible);
     };
+
+    function getAvatarLink(avatar) {
+        if (!avatar) return "";
+        return avatar.split(" ")[0];
+    }
 
     useEffect(() => {
         const profile = JSON.parse(localStorage.getItem('user_profile'));
@@ -64,9 +70,9 @@ export default function AdminHeader() {
                 {
                     user ? (<div className="flex items-center gap-2"
                         onClick={visibleMennu}>
-                        <Image src="/icons/accountic.png" alt="account" height={25} width={25} />
+                        <Image src={user && user.avatar ? getAvatarLink(user.avatar) : "/images/noavatar.png"} alt="account" height={25} width={25} />
                         <div className='flex flex-col gap-1'>
-                            <a id="account" href="/account">{user.username}</a>
+                            <a id="account" href="/admin/account">{user.username}</a>
                             <span className="text-sm text-gray-500">Admin</span>
                         </div>
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -81,7 +87,8 @@ export default function AdminHeader() {
             </div>
             {menuVisible && (
                 <div className="absolute right-8 top-15 px-5 py-5 bg-[#000000ee] rounded-md text-[#FF8200] cursor-pointer" onClick={visibleMennu}>
-                    <div className="mb-5 flex items-center gap-2">
+                    <div className="mb-5 flex items-center gap-2"
+                        onClick={() => router.push('/admin/account')}>
                         <Image src="/icons/accountic.png" alt="account" height={25} width={25} />
                         <span>Manage My Account</span>
                     </div>

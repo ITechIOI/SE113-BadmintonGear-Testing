@@ -26,6 +26,7 @@ export default function Login() {
                 localStorage.setItem('user_profile', JSON.stringify(profileResponse));
                 Cookies.set('role', profileResponse.roles, { expires: 1 }); // Set roles in cookies
                 Cookies.set('access_token', response.access_token, { expires: 1 }); // Set access token in cookies
+                localStorage.setItem('password', password); // Store password in localStorage
                 if (profileResponse.roles === "admin") {
                     router.push('/admin/dashboard');
                 }

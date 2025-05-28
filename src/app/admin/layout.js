@@ -29,21 +29,19 @@ const inter = Inter({
 export default function AdminLayout({ children }) {
 
     return (
-        <html lang="en">
-            <body className="antialiased bg-black font-inter">
-                <div className="flex">
-                    {/* Sidebar */}
+        <>
+            <div className="flex font-inter">
+                {/* Sidebar */}
 
-                    <Sidebar />
-                    {/* Main Content */}
-                    <main className="w-full ">
-                        <AdminHeader />
-                        <div className="px-10 py-10">
-                            {children}
-                        </div>
-                    </main>
-                </div>
-            </body>
-        </html>
+                <Sidebar />
+                {/* Main Content */}
+                <main className="w-full ">
+                    <AdminHeader />
+                    <div className="px-10 py-10">
+                        {children}
+                    </div>
+                </main>
+            </div>
+        </>
     );
 }

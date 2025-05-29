@@ -57,24 +57,23 @@ export default function Account() {
     }
 
     const handleDeleteImage = async () => {
-        const publicId = getPublicIdFromAvatar(user.avatar); // Lấy publicId từ URL
+        const publicId = getPublicIdFromAvatar(user.avatar);
         if (publicId) {
             try {
-                const deleteData = {
-                    publicId: publicId,
-                    type: "image"
-                }
-                const response = await deleteImage(deleteData);
-                if (response) {
-                    setUser({ ...user, avatar: null }); // Cập nhật state user để xóa avatar
-                    setAvatarPreview(null); // Xóa preview
-                    setImageMenu(false); // Ẩn menu
-                }
+                const deleteData = new FormData();
+                deleteData.append("publicId", publicId);
+                deleteData.append("type", "image");
+
+                // Thêm return ở đây
+                return await deleteImage(deleteData);
             } catch (err) {
                 console.error("Error deleting image:", err);
+                return null;
             }
         }
+        return null;
     }
+
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith("image/")) {
@@ -140,6 +139,10 @@ export default function Account() {
         }
         else {
             setError('')
+            setUpdatedUser({
+                ...updatedUser,
+                password: newPassword // Cập nhật mật khẩu mới
+            });
         }
     }
 
@@ -154,35 +157,26 @@ export default function Account() {
 
     const handleSaveChanges = async () => {
         const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const password = document.getElementById('password').value;
         let response = null;
 
         if (avatarPreview && fileInputRef.current.files[0]) {
             try {
-                await handleDeleteImage(); // Xóa ảnh cũ nếu có
-                const formData = new FormData();
-                formData.append("avatar", fileInputRef.current.files[0]);
-                const uploadRes = await uploadImage(formData); // Gọi API upload ảnh
-                setUpdatedUser({
-                    ...updatedUser,
-                    avatar: uploadRes 
-                });
+                if (user && user.avatar) {
+                    await handleDeleteImage();
+                }
+                const file = fileInputRef.current.files[0];
+                const uploadRes = await uploadImage(file);
+                setUpdatedUser({ ...updatedUser, avatar: uploadRes });
             } catch (err) {
-                setError("Upload avatar failed!");
+                alert("Failed to upload avatar. Please try again.");
                 return;
             }
         }
-        if (password !== "" && newPassword !== "" && confirmPassword !== "" && error === "") {
-            setUpdatedUser({
-                ...updatedUser,
-                password: newPassword // Cập nhật mật khẩu mới
-            });
-        }
-        if (updatedUser !== null && (updatedUser.firstName + " " + updatedUser.lastName !== user.name || updatedUser.email !== user.email || updatedUser.phone !== user.phone)) {
+
+        if (updatedUser !== null && (updatedUser.firstName + " " + updatedUser.lastName !== user.name || updatedUser.email !== user.email || updatedUser.phone !== user.phone || (updatedUser.avatar !== user.avatar))) {
             try {
                 response = await updateUser(updatedUser);
-                if (response.ok) {
+                if (response) {
                     const profile = await getProfile();
                     localStorage.setItem("password", newPassword); // Lưu mật khẩu mới vào localStorage
                     setUser(profile);
@@ -191,6 +185,7 @@ export default function Account() {
                     document.getElementById('password').value = "";
                     setUpdatedUser(null);
                     localStorage.setItem("user_profile", JSON.stringify(profile)); // Cập nhật dữ liệu người dùng trong localStorage
+                    window.location.reload(); // Tải lại trang để cập nhật thông tin người dùng
                 }
                 else {
                     alert("Failed to update user information. Please try again.");
@@ -208,10 +203,31 @@ export default function Account() {
         }
     }
 
+    const handleRemoveAvatar = async (e) => {
+        const res = await handleDeleteImage();
+        if (res === "Image deleted successfully") {
+            setAvatarPreview(null); // Xóa preview
+            setImageMenu(false); // Ẩn menu
+            const updated = { avatar: "" };
+            console.log(updated);
+            const response = await updateUser(updated);
+            if (response) {
+                setUser({ ...user, avatar: "" });
+                localStorage.setItem("user_profile", JSON.stringify({ ...user, avatar: "" }));
+                window.location.reload();
+            }
+
+        }
+        else {
+            alert("Failed to remove avatar");
+        }
+        setImageMenu(false);
+    }
+
     useEffect(() => {
         const storedUser = localStorage.getItem("user_profile");
         if (storedUser) {
-            setUser(JSON.parse(storedUser)); // Nếu có dữ liệu, cập nhật state `user`
+            setUser(JSON.parse(storedUser));
         }
     }, []);
 
@@ -257,8 +273,8 @@ export default function Account() {
                                     <button className="block w-full text-left text-gray-700 hover:bg-gray-100 px-4 py-2" onClick={handleUploadAvatar}>
                                         Change Avatar
                                     </button>
-                                    <button className="block w-full text-left text-gray-700 hover:bg-gray-100 px-4 py-2" disabled={user && user.avatar} >
-                                        Remove Avatar
+                                    <button className="block w-full text-left text-gray-700 hover:bg-gray-100 px-4 py-2 disabled-bg-black" disabled={!user || !user.avatar} onClick={handleRemoveAvatar}>
+                                        {user && user.avatar ? "Remove Avatar" : "Upload Avatar"}
                                     </button>
                                 </div>
                             )}
@@ -294,9 +310,17 @@ export default function Account() {
                         </div>
                         <div className='flex justify-end gap-5 items-center mt-5 mr-5'>
                             <button className='px-4 py-2 rounded-xs cursor-pointer' onClick={handleCancel}>Cancel</button>
-                            <button className={`bg-[#ff8200] text-white px-4 py-2 rounded-xs cursor-pointer ${(error !== "" || (!updatedUser && password === "") ||
-                                (user && updatedUser && (updatedUser.firstName + " " + updatedUser.lastName) === user.name && updatedUser.email === user.email && updatedUser.phone === user.phone)) ?
-                                "disabled bg-gray-700" : ""}`}
+                            <button className={`bg-[#ff8200] text-white px-4 py-2 rounded-xs ${!(error === "" && (avatarPreview ||
+                                (user && updatedUser && updatedUser.firstName + " " + updatedUser.lastName !== user.name) ||
+                                (updatedUser && updatedUser.email !== user.email) ||
+                                (updatedUser && updatedUser.phone !== user.phone) ||
+                                (updatedUser && updatedUser.password))) ?
+                                " bg-gray-700 cursor-not-allowed" : "cursor-pointer "}`}
+                                disabled={!(error === "" && (avatarPreview ||
+                                    (user && updatedUser && updatedUser.firstName + " " + updatedUser.lastName !== user.name) ||
+                                    (updatedUser && updatedUser.email !== user.email) ||
+                                    (updatedUser && updatedUser.phone !== user.phone) ||
+                                    (updatedUser && updatedUser.password)))}
                                 onClick={handleSaveChanges}>Save Changes</button>
                         </div>
                     </div>

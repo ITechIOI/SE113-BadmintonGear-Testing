@@ -18,7 +18,7 @@ const getAllUsers = async (page) => {
     return data;
 }
 
-const getProfile = async()=>{
+const getProfile = async () => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/users/users/profile`;
     const token = localStorage.getItem('access_token');
     console.log(token);
@@ -61,7 +61,6 @@ const updateUser = async (userData) => {
     console.log(userData);
     const url = `${process.env.NEXT_PUBLIC_API_URL}/users/users`;
     const token = localStorage.getItem('access_token');
-    console.log(token);
     const response = await fetch(url, {
         method: 'PUT',
         headers: {
@@ -70,13 +69,11 @@ const updateUser = async (userData) => {
         },
         body: JSON.stringify(userData)
     });
-
     if (!response.ok) {
         alert('Failed to update user');
         console.log('Failed to update user');
         return null;
     }
-
     const data = await response;
     console.log(data);
     alert('User updated successfully');
@@ -86,7 +83,7 @@ const updateUser = async (userData) => {
 const uploadImage = async (file) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/users/cloudinary/upload`;
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
     const response = await fetch(url, {
         method: 'POST',
         body: formData
@@ -100,22 +97,19 @@ const uploadImage = async (file) => {
 }
 
 const deleteImage = async (deleteData) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/users/cloudinary/upload`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/users/cloudinary/delete`;
     const token = localStorage.getItem('access_token');
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(deleteData)
+        body: deleteData
     });
-    if (response.text()!=="Image deleted successfully") {
-        alert('Failed to delete image');
-        console.log('Failed to delete image');
-        return false
-    }
-    return true;
+    const data = await response.text();
+
+    return (data.toString().trim());
+
 }
 
 export { getAllUsers, getProfile, updateUser, createUser, uploadImage, deleteImage };

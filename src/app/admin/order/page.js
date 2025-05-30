@@ -1,83 +1,105 @@
 "use client"
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import React from 'react'
 import AdminOrderItem from "@/components/AdminOrderItem";
+import { getAllOrders } from "@/api/orderApi";
 
 export default function OrderPage() {
     const [isAllChecked, setIsAllChecked] = useState(false); // Trạng thái checkbox của thead
     const [selectedOption, setSelectedOption] = useState('all-times');
-    const [orders, setOrders] = useState([
-        {
-            id: "1",
-            total: 345,
-            date: "2025-05-01",
-            customer: { username: "customer1", email: "cus1@gmail.com" },
-            payment: "Cash On Delivery",
-            state: "Delivered",
-            isChecked: false,
-            products: [
-                { id: "pro001", name: "Product 1", image: "/images/product1.png", price: 166, quantity: 2 },
-                { id: "pro002", name: "Product 2", image: "/images/product1.png", price: 200, quantity: 1 },
-            ],
-        },
-        {
-            id: "2",
-            total: 456,
-            date: "2025-05-02",
-            customer: { username: "customer1", email: "cus1@gmail.com" },
-            payment: "Bank Transfer",
-            state: "Shipped",
-            isChecked: false,
-            products: [
-                { id: "pro001", name: "Product 1", image: "/images/product1.png", price: 166, quantity: 2 },
-            ],
-        },
-        {
-            id: "3",
-            total: 288,
-            date: "2025-05-04",
-            customer: { username: "customer1", email: "cus1@gmail.com" },
-            payment: "Bank Transfer",
-            state: "Processing",
-            isChecked: false,
-            products: [
-                { id: "pro001", name: "Product 3", image: "/images/product1.png", price: 189, quantity: 1 },
-                { id: "pro002", name: "Product 2", image: "/images/product1.png", price: 99, quantity: 1 },
+    const [orders, setOrders] = useState([]);
+    const [orderDisplay, setOrderDisplay] = useState([]);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
-            ],
-        },
-        {
-            id: "4",
-            total: 288,
-            date: "2025-05-04",
-            customer: { username: "customer1", email: "cus1@gmail.com" },
-            payment: "Cash On Delivery",
-            state: "Cancelled",
-            isChecked: false,
-            products: [
-                { id: "pro001", name: "Product 3", image: "/images/product1.png", price: 189, quantity: 1 },
-                { id: "pro002", name: "Product 2", image: "/images/product1.png", price: 99, quantity: 1 },
+    const fetchOrders = async () => {
+        try {
+            const data = await getAllOrders();
+            if (data) {
+                const ordersWithCheck = data.map(order => ({
+                    ...order,
+                    isChecked: false // Thêm thuộc tính isChecked cho mỗi order
+                }));
+                setOrders(ordersWithCheck);
+                setOrderDisplay(ordersWithCheck);
+                console.log('Orders fetched successfully:', ordersWithCheck);
+            } else {
+                console.log('Failed to fetch orders');
+            }
+        }
+        catch (error) {
+            console.log('Error fetching orders:', error);
+        }
+    }
 
-            ],
-        },
-    ]);
+    useEffect(() => {
+        fetchOrders();
+    }, []);
 
-    const handleSelectAll = () => {
-        const newCheckedState = !isAllChecked;
-        setIsAllChecked(newCheckedState);
-        setOrders(orders.map(order => ({ ...order, isChecked: newCheckedState })));
-    };
+    const filterOrdersByDate = () => {
+        if (startDate) {
+            let filteredOrders = [];
+            const endDateObj = endDate
+                ? new Date(new Date(endDate).setHours(23, 59, 59, 999))
+                : null;
+            if (!endDate) {
+                filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate >= new Date(startDate);
+                });
+            } else {
+                filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return (
+                        orderDate >= new Date(startDate) &&
+                        orderDate <= endDateObj
+                    );
+                });
+            }
+            setOrderDisplay(filteredOrders);
+        } else {
+            if (endDate) {
+                const endDateObj = new Date(new Date(endDate).setHours(23, 59, 59, 999));
+                const filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate <= endDateObj;
+                });
+                setOrderDisplay(filteredOrders);
+            }
+            console.log('No date selected, displaying all orders');
+            setOrderDisplay(orders);
+        }
+    }
 
-    // Hàm xử lý khi checkbox trong tbody được chọn
-    const handleOrderCheck = (id) => {
-        const updatedOrders = orders.map(order =>
-            order.id === id ? { ...order, isChecked: !order.isChecked } : order
-        );
-        setOrders(updatedOrders);
-
-        // Kiểm tra nếu tất cả các checkbox con đều được chọn
-        const allChecked = updatedOrders.every(order => order.isChecked);
-        setIsAllChecked(allChecked);
+    const handleRadioChange = (option) => {
+        switch (option) {
+            case 'all-times':
+                setOrderDisplay(orders);
+                break;
+            case '12-months':
+                const twelveMonthsAgo = new Date();
+                twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
+                setOrderDisplay(orders.filter(order => new Date(order.createdAt) >= twelveMonthsAgo));
+                break;
+            case '30-days':
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                setOrderDisplay(orders.filter(order => new Date(order.createdAt) >= thirtyDaysAgo));
+                break;
+            case '7-days':
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                setOrderDisplay(orders.filter(order => new Date(order.createdAt) >= sevenDaysAgo));
+                break;
+            case '24-hours':
+                const twentyFourHoursAgo = new Date();
+                twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+                setOrderDisplay(orders.filter(order => new Date(order.createdAt) >= twentyFourHoursAgo));
+                break;
+            default:
+                setOrderDisplay(orders);
+        }
     };
 
     return (
@@ -112,7 +134,10 @@ export default function OrderPage() {
                             value="all-times"
                             className="hidden peer"
                             checked={selectedOption === 'all-times'}
-                            onChange={() => setSelectedOption('all-times')}
+                            onChange={() => {
+                                setSelectedOption('all-times');
+                                handleRadioChange('all-times');
+                            }}
                         />
                         <span className="px-4 py-2 rounded-md cursor-pointer peer-checked:bg-[#ff8200] peer-checked:text-white">
                             All Times
@@ -127,7 +152,10 @@ export default function OrderPage() {
                             value="12-months"
                             className="hidden peer"
                             checked={selectedOption === '12-months'}
-                            onChange={() => setSelectedOption('12-months')}
+                            onChange={() => {
+                                setSelectedOption('12-months');
+                                handleRadioChange('12-months');
+                            }}
                         />
                         <span className="px-4 py-2 rounded-md cursor-pointer peer-checked:bg-[#ff8200] peer-checked:text-white">
                             12 months
@@ -142,7 +170,10 @@ export default function OrderPage() {
                             value="30-days"
                             className="hidden peer"
                             checked={selectedOption === '30-days'}
-                            onChange={() => setSelectedOption('30-days')}
+                            onChange={() => {
+                                setSelectedOption('30-days');
+                                handleRadioChange('30-days');
+                            }}
                         />
                         <span className="px-4 py-2 rounded-md cursor-pointer peer-checked:bg-[#ff8200] peer-checked:text-white">
                             30 days
@@ -157,7 +188,10 @@ export default function OrderPage() {
                             value="7-days"
                             className="hidden peer"
                             checked={selectedOption === '7-days'}
-                            onChange={() => setSelectedOption('7-days')}
+                            onChange={() => {
+                                setSelectedOption('7-days');
+                                handleRadioChange('7-days');
+                            }}
                         />
                         <span className="px-4 py-2 rounded-md cursor-pointer peer-checked:bg-[#ff8200] peer-checked:text-white">
                             7 days
@@ -172,7 +206,10 @@ export default function OrderPage() {
                             value="24-hours"
                             className="hidden peer"
                             checked={selectedOption === '24-hours'}
-                            onChange={() => setSelectedOption('24-hours')}
+                            onChange={() => {
+                                setSelectedOption('24-hours');
+                                handleRadioChange('24-hours');
+                            }}
                         />
                         <span className="px-4 py-2 rounded-md cursor-pointer peer-checked:bg-[#ff8200] peer-checked:text-white">
                             24 hours
@@ -180,13 +217,41 @@ export default function OrderPage() {
                     </label>
                 </div>
                 <div className='flex gap-3'>
-                    <button className='text-[#667085] border border-[#E0E2E7] rounded-md px-4 py-2 flex items-center gap-2 bg-white'>
+                    <button className='text-[#667085] border border-[#E0E2E7] rounded-md px-4 py-2 flex items-center gap-2 bg-white'
+                        onClick={() => setShowDatePicker(!showDatePicker)}>
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path fillRule="evenodd" clipRule="evenodd" d="M7.5 2.49984C7.5 2.0396 7.1269 1.6665 6.66667 1.6665C6.20643 1.6665 5.83333 2.0396 5.83333 2.49984H5C3.61929 2.49984 2.5 3.61913 2.5 4.99984V15.8332C2.5 17.2139 3.61929 18.3332 5 18.3332H15C16.3807 18.3332 17.5 17.2139 17.5 15.8332V4.99984C17.5 3.61913 16.3807 2.49984 15 2.49984H14.1667C14.1667 2.0396 13.7936 1.6665 13.3333 1.6665C12.8731 1.6665 12.5 2.0396 12.5 2.49984H7.5ZM15.8333 5.83317V4.99984C15.8333 4.5396 15.4602 4.1665 15 4.1665H14.1667C14.1667 4.62674 13.7936 4.99984 13.3333 4.99984C12.8731 4.99984 12.5 4.62674 12.5 4.1665H7.5C7.5 4.62674 7.1269 4.99984 6.66667 4.99984C6.20643 4.99984 5.83333 4.62674 5.83333 4.1665H5C4.53976 4.1665 4.16667 4.5396 4.16667 4.99984V5.83317H15.8333ZM4.16667 7.49984V15.8332C4.16667 16.2934 4.53976 16.6665 5 16.6665H15C15.4602 16.6665 15.8333 16.2934 15.8333 15.8332V7.49984H4.16667Z" fill="#667085" />
                         </svg>
                         Select Dates
                     </button>
-                    <button className='text-[#667085] border border-[#E0E2E7] bg-white rounded-md px-4 py-2 flex items-center gap-2'>
+                    {showDatePicker && (
+                        <div className="absolute z-50 bg-white px-10 py-5 rounded shadow flex gap-5 items-left flex-col right-10 top-60 ">
+                            <div>Choose duration:</div>
+                            <div className="flex items-between w-full gap-10">
+                                <label >From:</label>
+                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                            </div>
+                            <div className="w-full flex justify-between items-center ">
+                                <label>To:</label>
+                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                            </div>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    className="px-3 py-1 bg-gray-600 text-white rounded"
+                                    onClick={() => setShowDatePicker(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="px-3 py-1 bg-[#ff8200] text-white rounded"
+                                    onClick={filterOrdersByDate}
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    {/* <button className='text-[#667085] border border-[#E0E2E7] bg-white rounded-md px-4 py-2 flex items-center gap-2'>
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M10.8333 6.66667C10.8333 7.1269 11.2064 7.5 11.6667 7.5C12.1269 7.5 12.5 7.1269 12.5 6.66667V5.83333H16.6667C17.1269 5.83333 17.5 5.46024 17.5 5C17.5 4.53976 17.1269 4.16667 16.6667 4.16667H12.5V3.33333C12.5 2.8731 12.1269 2.5 11.6667 2.5C11.2064 2.5 10.8333 2.8731 10.8333 3.33333V6.66667Z" fill="#667085" />
                             <path d="M2.5 10C2.5 9.53976 2.8731 9.16667 3.33333 9.16667H4.58333C4.81345 9.16667 5 9.35321 5 9.58333V10.4167C5 10.6468 4.81345 10.8333 4.58333 10.8333H3.33333C2.8731 10.8333 2.5 10.4602 2.5 10Z" fill="#667085" />
@@ -196,40 +261,39 @@ export default function OrderPage() {
                             <path d="M2.5 15C2.5 14.5398 2.8731 14.1667 3.33333 14.1667H10.4167C10.6468 14.1667 10.8333 14.3532 10.8333 14.5833V15.4167C10.8333 15.6468 10.6468 15.8333 10.4167 15.8333H3.33333C2.8731 15.8333 2.5 15.4602 2.5 15Z" fill="#667085" />
                         </svg>
                         Filters
-                    </button>
+                    </button> */}
 
                 </div>
             </div>
             <div className="shadow-md rounded-md border border-[#E0E2E7] mt-5">
                 <table className='w-full py-2 rounded-md overflow-hidden '>
                     <thead className='bg-[#F9F9FC] font-medium border-b border-[#F0F1F3]'>
-                        <tr className='text-left text-[#344054] font-semibold rounded-md'>
-                            <th>
+                        <tr className='text-center text-[#344054] font-semibold rounded-md'>
+                            {/* <th>
                                 <input
                                     type='checkbox'
                                     className='w-5 h-5 accent-[#ff8200] ml-5 my-4'
                                     checked={isAllChecked}
                                     onChange={handleSelectAll}
                                 />
-                            </th>
+                            </th> */}
                             <th className='py-2 px-4'>OrderID</th>
-                            <th className='py-2 px-4'>Product</th>
+                            {/* <th className='py-2 px-4'>Product</th> */}
                             <th className='py-2 px-4'>Date</th>
-                            <th className='py-2 px-4'>Customers</th>
+                            <th className='py-2 px-4'>Address</th>
                             <th className='py-2 px-4'>Total</th>
-                            <th className='py-2 px-4'>Payment</th>
+                            {/* <th className='py-2 px-4'>Payment</th> */}
                             <th className='py-2 px-4'>State</th>
                             <th className='py-2 px-4'>Action</th>
 
 
                         </tr>
                     </thead>
-                    <tbody className='text-[#344054] font-normal'>
-                        {orders.map((order) => (
+                    <tbody className='text-[#344054] font-normal text-center'>
+                        {orderDisplay.map((order) => (
                             <AdminOrderItem
                                 key={order.id}
-                                order={order}
-                                onCheck={() => handleOrderCheck(order.id)} />
+                                order={order} />
                         ))}
                     </tbody>
                 </table>

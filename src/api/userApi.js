@@ -113,7 +113,6 @@ const deleteImage = async (deleteData) => {
 
 const getUserById = async (id) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/users/users/id/${id}`;
-    const token = localStorage.getItem('access_token');
     const response = await fetch(url, {
         method: 'GET',
         headers: {

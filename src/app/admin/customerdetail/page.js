@@ -1,77 +1,39 @@
 "use client"
-import React, {useState} from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import AdminOrderItem from '@/components/AdminOrderItem';
+import { useSearchParams } from 'next/navigation';
+import { getUserById } from '@/api/userApi';
 
-export default function CustomerDetailPage(id) {
-    const customerId = id.params.id;
-    const customer = {
-        id: 1,
-        name: "John Doe",
-        username: "johndoe",
-        email: "john@example.com",
-        phone: "+1234567890",
-        image: "/images/user1.png",
-        status: true,
-        point: 100,
-        address: "123 Main St, City, Country",
-        createdAt: "2023-01-01",
-    };
-    const [orders, setOrders] = useState([
-        {
-            id: "1",
-            total: 345,
-            date: "2025-05-01",
-            customer: { username: "customer1", email: "cus1@gmail.com" },
-            payment: "Cash On Delivery",
-            state: "Delivered",
-            isChecked: false,
-            products: [
-                { id: "pro001", name: "Product 1", image: "/images/product1.png", price: 166, quantity: 2 },
-                { id: "pro002", name: "Product 2", image: "/images/product1.png", price: 200, quantity: 1 },
-            ],
-        },
-        {
-            id: "2",
-            total: 456,
-            date: "2025-05-02",
-            customer: { username: "customer1", email: "cus1@gmail.com" },
-            payment: "Bank Transfer",
-            state: "Shipped",
-            isChecked: false,
-            products: [
-                { id: "pro001", name: "Product 1", image: "/images/product1.png", price: 166, quantity: 2 },
-            ],
-        },
-        {
-            id: "3",
-            total: 288,
-            date: "2025-05-04",
-            customer: { username: "customer1", email: "cus1@gmail.com" },
-            payment: "Bank Transfer",
-            state: "Processing",
-            isChecked: false,
-            products: [
-                { id: "pro001", name: "Product 3", image: "/images/product1.png", price: 189, quantity: 1 },
-                { id: "pro002", name: "Product 2", image: "/images/product1.png", price: 99, quantity: 1 },
+export default function CustomerDetailPage() {
+    const params = useSearchParams();
+    const customerId = params.get('id');
+    console.log("Customer ID:", customerId);
+    const [customer, setCustomer] = useState(null);
 
-            ],
-        },
-        {
-            id: "4",
-            total: 288,
-            date: "2025-05-04",
-            customer: { username: "customer1", email: "cus1@gmail.com" },
-            payment: "Cash On Delivery",
-            state: "Cancelled",
-            isChecked: false,
-            products: [
-                { id: "pro001", name: "Product 3", image: "/images/product1.png", price: 189, quantity: 1 },
-                { id: "pro002", name: "Product 2", image: "/images/product1.png", price: 99, quantity: 1 },
+    const fetchCustomerData = async (id) => {
+        const response = await getUserById(id);
+        console.log("Fetched Customer Data:", response);
+        if (!response) {
+            setCustomer(null);
+        }
+        else {
+            setCustomer(response);
+        }
+    }
 
-            ],
-        },
-    ]);
+    useEffect(() => {
+        if (customerId) {
+            fetchCustomerData(customerId);
+        }
+    }, [customerId]);
+
+    function getAvatarLink(avatar) {
+        if (!avatar) return "";
+        return avatar.split(" ")[0];
+    }
+
+    const [orders, setOrders] = useState([]);
     const totalBalance = 1000; // Placeholder for total balance
     const orderCount = 5; // Placeholder for order count
 
@@ -99,9 +61,9 @@ export default function CustomerDetailPage(id) {
                 <div className="max-w-sm mx-auto bg-white rounded-xl shadow-md overflow-hidden w-1/3 p-1">
                     <div className="bg-[#ff8200] h-35 w-full rounded-sm"></div>
                     <div className="flex flex-col items-center -mt-20">
-                        <Image src={customer.image} alt="customer" width={150} height={150} className="rounded-full border-4 border-white" />
-                        <h2 className="mt-2 text-lg font-semibold text-gray-800">{customer.name}</h2>
-                        <p className="text-sm text-gray-500">{customer.username}</p>
+                        <Image src={(customer && customer.avatar && getAvatarLink(customer.avatar)) || "/images/noavatar.png"} alt="customer" width={150} height={150} className="rounded-full border-4 border-white" />
+                        <h2 className="mt-2 text-lg font-semibold text-gray-800">{customer ? customer.name : ""}</h2>
+                        <p className="text-sm text-gray-500">{customer ? customer.username : ""}</p>
                     </div>
                     <hr className="my-5 border-gray-300" />
                     <div className="mt-6 px-6 py-4 text-sm text-gray-700 space-y-4">
@@ -114,7 +76,7 @@ export default function CustomerDetailPage(id) {
                             </svg>
                             <div className='flex flex-col justify-start'>
                                 <span className="font-medium text-gray-500">User ID</span>
-                                <span className=" text-black">{customer.id}</span>
+                                <span className=" text-black">{customer ? customer.id : ""}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -125,7 +87,7 @@ export default function CustomerDetailPage(id) {
                             </svg>
                             <div className='flex flex-col justify-start'>
                                 <span className="font-medium text-gray-500">Email</span>
-                                <span className=" text-black">{customer.email}</span>
+                                <span className=" text-black">{customer ? customer.email : ""}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -175,8 +137,8 @@ export default function CustomerDetailPage(id) {
                     </div>
                 </div>
                 <div className='w-full'>
-                    <div className='flex justify-between items-center mb-5'>
-                        <div className='w-2/7 bg-white rounded-md shadow-md overflow-hidden p-5 flex flex-col gap-2'>
+                    <div className='flex justify-between items-center mb-5 gap-30'>
+                        <div className='w-full bg-white rounded-md shadow-md overflow-hidden py-5 px-20 flex flex-col gap-2'>
                             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="2" y="2" width="36" height="36" rx="18" fill="#CFE7DC" />
                                 <rect x="2" y="2" width="36" height="36" rx="18" stroke="#E7F4EE" strokeWidth="4" />
@@ -186,7 +148,7 @@ export default function CustomerDetailPage(id) {
                             <span className='text-gray-600'>Total Balance</span>
                             <div className='text-xl font-semibold'>${totalBalance}</div>
                         </div>
-                        <div className='w-2/7 bg-white rounded-md shadow-md overflow-hidden p-5 flex flex-col gap-2'>
+                        <div className='w-full px-20 bg-white rounded-md shadow-md overflow-hidden py-5 flex flex-col gap-2'>
                             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="2" y="2" width="36" height="36" rx="18" fill="#FAE1CF" />
                                 <rect x="2" y="2" width="36" height="36" rx="18" stroke="#FDF1E8" strokeWidth="4" />
@@ -197,17 +159,6 @@ export default function CustomerDetailPage(id) {
 
                             <span className='text-gray-600'>Total Orders</span>
                             <div className='text-xl font-semibold'>{orderCount}</div>
-                        </div>
-                        <div className='w-2/7 bg-white rounded-md shadow-md overflow-hidden p-5 flex flex-col gap-2'>
-                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="2" y="2" width="36" height="36" rx="18" fill="#FBE3CA" />
-                                <rect x="2" y="2" width="36" height="36" rx="18" stroke="#EFEFFD" strokeWidth="4" />
-                                <path d="M23.9658 18.4475C24.351 18.0517 24.3424 17.4186 23.9467 17.0334C23.5509 16.6482 22.9178 16.6568 22.5326 17.0525L19.2728 20.4017L17.8747 19.2809C17.4437 18.9354 16.8144 19.0047 16.4689 19.4356C16.1235 19.8666 16.1928 20.4959 16.6237 20.8414L19.0849 22.8143C19.2858 22.9754 19.5763 22.9575 19.7559 22.7729L23.9658 18.4475Z" fill="#FF8200" />
-                                <path fillRule="evenodd" clipRule="evenodd" d="M18.6085 10.3453C19.3838 9.5952 20.6143 9.5952 21.3897 10.3453L22.7184 11.6307L24.549 11.3718C25.6171 11.2207 26.6126 11.944 26.799 13.0065L27.1184 14.8275L28.7516 15.694C29.7045 16.1996 30.0848 17.3699 29.611 18.3391L28.7991 20L29.611 21.661C30.0848 22.6301 29.7045 23.8004 28.7516 24.306L27.1184 25.1725L26.799 26.9935C26.6126 28.056 25.6171 28.7793 24.549 28.6282L22.7184 28.3693L21.3897 29.6547C20.6143 30.4048 19.3838 30.4048 18.6085 29.6547L17.2797 28.3693L15.4492 28.6282C14.381 28.7793 13.3855 28.056 13.1992 26.9935L12.8797 25.1725L11.2466 24.306C10.2936 23.8004 9.9134 22.6301 10.3872 21.661L11.1991 20L10.3872 18.3391C9.9134 17.3699 10.2936 16.1996 11.2466 15.694L12.8797 14.8275L13.1992 13.0065C13.3855 11.944 14.381 11.2207 15.4492 11.3718L17.2797 11.6307L18.6085 10.3453ZM19.9991 11.7827L22.0305 13.7479L24.8291 13.3521L25.3174 16.136L27.8142 17.4607L26.5729 20L27.8142 22.5393L25.3174 23.864L24.8291 26.6479L22.0305 26.2521L19.9991 28.2173L17.9677 26.2521L15.1691 26.6479L14.6807 23.864L12.184 22.5393L13.4253 20L12.184 17.4607L14.6807 16.136L15.1691 13.3521L17.9677 13.7479L19.9991 11.7827Z" fill="#FF8200" />
-                            </svg>
-
-                            <span className='text-gray-600'>Reward Point</span>
-                            <div className='text-xl font-semibold'>{customer.point}</div>
                         </div>
                     </div>
                     <div className='mt-5 shadow-md bg-white rounded-md py-5'>
@@ -250,7 +201,7 @@ export default function CustomerDetailPage(id) {
                                 {orders.map((order) => (
                                     <AdminOrderItem
                                         key={order.id}
-                                        order={order}/>
+                                        order={order} />
                                 ))}
                             </tbody>
                         </table>

@@ -1,6 +1,5 @@
-
-const getAllUsers = async (page) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/users/users/all?page=${page}&limit=10`;
+const getAllUsers = async () => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/users/users/all`;
     const token = localStorage.getItem('access_token');
     const response = await fetch(url, {
         method: 'GET',
@@ -12,10 +11,10 @@ const getAllUsers = async (page) => {
 
     if (!response.ok) {
         console.error('Failed to fetch users:');
+        return null;
     }
-
-    const data = await response;
-    return data;
+    const data = await response.json();
+    return data.data.content;
 }
 
 const getProfile = async () => {
@@ -112,4 +111,21 @@ const deleteImage = async (deleteData) => {
 
 }
 
-export { getAllUsers, getProfile, updateUser, createUser, uploadImage, deleteImage };
+const getUserById = async (id) => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/users/users/id/${id}`;
+    const token = localStorage.getItem('access_token');
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    });
+    if (!response.ok) {
+        console.log('Failed to fetch user by ID');
+        return null;
+    }
+    const data = await response.json();
+    return data;
+}
+
+export { getAllUsers, getProfile, updateUser, createUser, uploadImage, deleteImage, getUserById };

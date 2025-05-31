@@ -14,6 +14,7 @@ export default function CustomerPage() {
             if (response) {
                 setCustomers(response);
                 setDisplayCustomers(response);
+                console.log(response)
             } else {
                 console.log("No customer data found");
             }
@@ -118,15 +119,16 @@ export default function CustomerPage() {
                 </div>
             )}
             <div className="shadow-md rounded-md border border-[#E0E2E7] mt-5">
-                <table className='w-full py-2 rounded-md overflow-hidden '>
+                <table className='w-full py-2 rounded-md overflow-hidden px-10'>
                     <thead className='bg-[#F9F9FC] font-medium border-b border-[#F0F1F3]'>
                         <tr className='text-center text-[#344054] font-semibold rounded-md'>
-                            <th className='py-2 px-4'>Customer</th>
-                            <th className='py-2 px-4'>Username</th>
-                            <th className='py-2 px-4'>Email</th>
-                            <th className='py-2 px-4'>Phone</th>
-                            <th className='py-2 px-4'>Orders</th>
-                            <th className='py-2 px-4'>Balance</th>
+                            <th className='py-2 w-1/5'>Customer</th>
+                            <th className='py-2 px-4 w-1/5'>Email</th>
+                            <th className='py-2 px-4 w-1/5'>Gender</th>
+                            <th className='py-2 px-4 w-1/5'>Phone</th>
+                            <th className='py-2 px-4 w-1/5'>Role</th>
+                            {/* <th className='py-2 px-4'>Orders</th>
+                            <th className='py-2 px-4'>Balance</th> */}
                         </tr>
                     </thead>
                     <tbody className='text-[#344054] font-normal text-center'>

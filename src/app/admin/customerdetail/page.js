@@ -4,12 +4,19 @@ import Image from 'next/image'
 import AdminOrderItem from '@/components/AdminOrderItem';
 import { useSearchParams } from 'next/navigation';
 import { getUserById } from '@/api/userApi';
+import { getOrderByUserId } from '@/api/orderApi';
 
 export default function CustomerDetailPage() {
     const params = useSearchParams();
     const customerId = params.get('id');
-    console.log("Customer ID:", customerId);
+    const [orders, setOrders] = useState([]);
+    const [displayOrders, setDisplayOrders] = useState([]);
     const [customer, setCustomer] = useState(null);
+    const [orderCount, setOrderCount] = useState(0);
+    const [totalBalance, setTotalBalance] = useState(0);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     const fetchCustomerData = async (id) => {
         const response = await getUserById(id);
@@ -22,9 +29,59 @@ export default function CustomerDetailPage() {
         }
     }
 
+    const fetchOrders = async () => {
+        const response = await getOrderByUserId(customerId);
+        console.log("Fetched Orders:", response);
+        if (response) {
+            setOrders(response);
+            setDisplayOrders(response);
+            setOrderCount(response.length);
+            const total = response.reduce((acc, order) => acc + order.totalPrice, 0);
+            setTotalBalance(total.toFixed(2)); // Assuming totalPrice is a number
+        } else {
+            setOrders([]);
+        }
+    }
+
+    const filterOrdersByDate = () => {
+        if (startDate) {
+            let filteredOrders = [];
+            const endDateObj = endDate
+                ? new Date(new Date(endDate).setHours(23, 59, 59, 999))
+                : null;
+            if (!endDate) {
+                filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate >= new Date(startDate);
+                });
+            } else {
+                filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return (
+                        orderDate >= new Date(startDate) &&
+                        orderDate <= endDateObj
+                    );
+                });
+            }
+            setDisplayOrders(filteredOrders);
+        } else {
+            if (endDate) {
+                const endDateObj = new Date(new Date(endDate).setHours(23, 59, 59, 999));
+                const filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate <= endDateObj;
+                });
+                setDisplayOrders(filteredOrders);
+            }
+            console.log('No date selected, displaying all orders');
+            setDisplayOrders(orders);
+        }
+    }
+
     useEffect(() => {
         if (customerId) {
             fetchCustomerData(customerId);
+            fetchOrders();
         }
     }, [customerId]);
 
@@ -32,10 +89,6 @@ export default function CustomerDetailPage() {
         if (!avatar) return "";
         return avatar.split(" ")[0];
     }
-
-    const [orders, setOrders] = useState([]);
-    const totalBalance = 1000; // Placeholder for total balance
-    const orderCount = 5; // Placeholder for order count
 
     return (
         <div className='px-2 py-5'>
@@ -76,7 +129,7 @@ export default function CustomerDetailPage() {
                             </svg>
                             <div className='flex flex-col justify-start'>
                                 <span className="font-medium text-gray-500">User ID</span>
-                                <span className=" text-black">{customer ? customer.id : ""}</span>
+                                <span className=" text-black">{customer ? customer.id + " - " + customer.roles : ""}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -105,10 +158,10 @@ export default function CustomerDetailPage() {
                             </svg>
                             <div className='flex flex-col justify-start'>
                                 <span className="font-medium text-gray-500">Phone Number</span>
-                                <span className="text-black">050 414 8778</span>
+                                <span className="text-black">{customer ? customer.phone : ""}</span>
                             </div>
                         </div>
-                        <div className="flex items-start gap-2">
+                        {/* <div className="flex items-start gap-2">
                             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="2" y="2" width="36" height="36" rx="18" fill="#E0E2E7" />
                                 <rect x="2" y="2" width="36" height="36" rx="18" stroke="#F0F1F3" strokeWidth="4" />
@@ -133,7 +186,7 @@ export default function CustomerDetailPage() {
                                 <span className="font-medium text-gray-500">Latest Transaction</span>
                                 <span className=" text-black">12 December 2022</span>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
                 <div className='w-full'>
@@ -165,13 +218,40 @@ export default function CustomerDetailPage() {
                         <div className='flex w-full justify-between items-center px-5'>
                             <div className='text-lg font-semibold'>Transaction History</div>
                             <div className='flex gap-5'>
-                                <button className='text-[#667085] border border-[#E0E2E7] rounded-md px-4 py-2 flex items-center gap-2'>
+                                <button className='text-[#667085] border border-[#E0E2E7] rounded-md px-4 py-2 flex items-center gap-2' onClick={() => { setShowDatePicker(!showDatePicker) }}>
                                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path fillRule="evenodd" clipRule="evenodd" d="M7.5 2.49984C7.5 2.0396 7.1269 1.6665 6.66667 1.6665C6.20643 1.6665 5.83333 2.0396 5.83333 2.49984H5C3.61929 2.49984 2.5 3.61913 2.5 4.99984V15.8332C2.5 17.2139 3.61929 18.3332 5 18.3332H15C16.3807 18.3332 17.5 17.2139 17.5 15.8332V4.99984C17.5 3.61913 16.3807 2.49984 15 2.49984H14.1667C14.1667 2.0396 13.7936 1.6665 13.3333 1.6665C12.8731 1.6665 12.5 2.0396 12.5 2.49984H7.5ZM15.8333 5.83317V4.99984C15.8333 4.5396 15.4602 4.1665 15 4.1665H14.1667C14.1667 4.62674 13.7936 4.99984 13.3333 4.99984C12.8731 4.99984 12.5 4.62674 12.5 4.1665H7.5C7.5 4.62674 7.1269 4.99984 6.66667 4.99984C6.20643 4.99984 5.83333 4.62674 5.83333 4.1665H5C4.53976 4.1665 4.16667 4.5396 4.16667 4.99984V5.83317H15.8333ZM4.16667 7.49984V15.8332C4.16667 16.2934 4.53976 16.6665 5 16.6665H15C15.4602 16.6665 15.8333 16.2934 15.8333 15.8332V7.49984H4.16667Z" fill="#667085" />
                                     </svg>
                                     Select Dates
                                 </button>
-                                <button className='text-[#667085] border border-[#E0E2E7] rounded-md px-4 py-2 flex items-center gap-2'>
+                                {showDatePicker && (
+                                    <div className="absolute z-50 bg-white px-10 py-5 rounded shadow flex gap-5 items-left flex-col right-10 top-60 ">
+                                        <div>Choose duration:</div>
+                                        <div className="flex items-between w-full gap-10">
+                                            <label >From:</label>
+                                            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                                        </div>
+                                        <div className="w-full flex justify-between items-center ">
+                                            <label>To:</label>
+                                            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                                        </div>
+                                        <div className="flex justify-end gap-3">
+                                            <button
+                                                className="px-3 py-1 bg-gray-600 text-white rounded"
+                                                onClick={() => setShowDatePicker(false)}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                className="px-3 py-1 bg-[#ff8200] text-white rounded"
+                                                onClick={filterOrdersByDate}
+                                            >
+                                                OK
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                                {/* <button className='text-[#667085] border border-[#E0E2E7] rounded-md px-4 py-2 flex items-center gap-2'>
                                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M10.8333 6.66667C10.8333 7.1269 11.2064 7.5 11.6667 7.5C12.1269 7.5 12.5 7.1269 12.5 6.66667V5.83333H16.6667C17.1269 5.83333 17.5 5.46024 17.5 5C17.5 4.53976 17.1269 4.16667 16.6667 4.16667H12.5V3.33333C12.5 2.8731 12.1269 2.5 11.6667 2.5C11.2064 2.5 10.8333 2.8731 10.8333 3.33333V6.66667Z" fill="#667085" />
                                         <path d="M2.5 10C2.5 9.53976 2.8731 9.16667 3.33333 9.16667H4.58333C4.81345 9.16667 5 9.35321 5 9.58333V10.4167C5 10.6468 4.81345 10.8333 4.58333 10.8333H3.33333C2.8731 10.8333 2.5 10.4602 2.5 10Z" fill="#667085" />
@@ -181,13 +261,13 @@ export default function CustomerDetailPage() {
                                         <path d="M2.5 15C2.5 14.5398 2.8731 14.1667 3.33333 14.1667H10.4167C10.6468 14.1667 10.8333 14.3532 10.8333 14.5833V15.4167C10.8333 15.6468 10.6468 15.8333 10.4167 15.8333H3.33333C2.8731 15.8333 2.5 15.4602 2.5 15Z" fill="#667085" />
                                     </svg>
                                     Filters
-                                </button>
+                                </button> */}
 
                             </div>
                         </div>
                         <table className='w-full mt-5'>
                             <thead className='bg-[#F9FAFB] font-medium'>
-                                <tr className='text-left bg-[#F9F9FC] font-semibold border-b border-[#E0E2E7]'>
+                                <tr className='text-center bg-[#F9F9FC] font-semibold border-b border-[#E0E2E7]'>
                                     <th className='py-2 px-4'>OrderID</th>
                                     <th className='py-2 px-4'>Product</th>
                                     <th className='py-2 px-4'>Date</th>
@@ -197,11 +277,12 @@ export default function CustomerDetailPage() {
 
                                 </tr>
                             </thead>
-                            <tbody className='text-[#344054] font-normal'>
-                                {orders.map((order) => (
+                            <tbody className='text-[#344054] font-normal text-center'>
+                                {displayOrders.map((order) => (
                                     <AdminOrderItem
                                         key={order.id}
-                                        order={order} />
+                                        order={order}
+                                        button={false} />
                                 ))}
                             </tbody>
                         </table>

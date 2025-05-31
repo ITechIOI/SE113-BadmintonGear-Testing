@@ -18,18 +18,15 @@ export default function OrderDetailsPage() {
         const response = await getOrderById(id);
         if (response) {
             setOrder(response);
-            console.log("Order fetched successfully", response);
         } else {
-            console.error("Failed to fetch order");
+            console.log("Failed to fetch order");
         }
     }
 
     const fetchOrderDetails = async (id) => {
         const reponse = await getDetailByOrderId(id);
-        console.log("Response: ", reponse);
         if (reponse && reponse.length > 0) {
             setDetails(reponse);
-            console.log("Order details fetched successfully", reponse);
         } else {
             console.log("Failed to fetch order details");
         }
@@ -39,9 +36,8 @@ export default function OrderDetailsPage() {
         const response = await getUserById(id);
         if (response) {
             setUser(response);
-            console.log("User fetched successfully", response);
         } else {
-            console.error("Failed to fetch user");
+            console.log("Failed to fetch user");
         }
     }
 

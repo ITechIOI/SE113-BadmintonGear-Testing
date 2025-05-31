@@ -9,10 +9,9 @@ export default function OrderDetailItem({ item }) {
         console.log('Fetching product with ID:', item.proudctId);
         try {
             const productData = await getProductById(item.proudctId);
-            console.log('Fetched product:', productData);
             setProduct(productData);
         } catch (error) {
-            console.error('Error fetching product:', error);
+            console.log('Error fetching product:', error);
         }
     };
 
@@ -25,7 +24,6 @@ export default function OrderDetailItem({ item }) {
     return (
         
         <tr>
-            {console.log('Rendering OrderDetailItem with item:', item.proudctId)}
             <td>
                 <div className='flex items-center gap-2'>
                     <Image

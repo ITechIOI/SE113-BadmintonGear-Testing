@@ -293,7 +293,8 @@ export default function OrderPage() {
                         {orderDisplay.map((order) => (
                             <AdminOrderItem
                                 key={order.id}
-                                order={order} />
+                                order={order}
+                                button={true} />
                         ))}
                     </tbody>
                 </table>

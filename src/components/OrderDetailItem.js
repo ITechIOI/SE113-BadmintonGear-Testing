@@ -1,23 +1,44 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { getProductById } from '@/api/productApi'
+import { getLinkImage } from '@/api/splitService';
 
-export default function OrderDetailItem({item}) {
+export default function OrderDetailItem({ item }) {
+    const [product, setProduct] = useState(null);
+    const fetchProduct = async () => {
+        console.log('Fetching product with ID:', item.proudctId);
+        try {
+            const productData = await getProductById(item.proudctId);
+            console.log('Fetched product:', productData);
+            setProduct(productData);
+        } catch (error) {
+            console.error('Error fetching product:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (item.proudctId) {
+            fetchProduct();
+        }
+    }, []);
+
     return (
+        
         <tr>
+            {console.log('Rendering OrderDetailItem with item:', item.proudctId)}
             <td>
                 <div className='flex items-center gap-2'>
                     <Image
-                        src={item.product.image}
-                        alt={item.product.name}
+                        src={getLinkImage(product ? product.imageUrl : "/images/placeholder.png")}
+                        alt={product ? product.name : "product"}
                         width={50}
                         height={50}
                         className="rounded-md"
                     />
-                    <div>{item.product.name}</div>
+                    <div>{product ? product.name : ""}</div>
                 </div>
             </td>
-            <td>{item.product.sku}</td>
-            <td>{item.quantity}</td>
+            <td className='py-4'>{item.quantity}</td>
             <td>${item.price}</td>
             <td>${item.quantity * item.price}</td>
         </tr>

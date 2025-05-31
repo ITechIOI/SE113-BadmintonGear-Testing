@@ -1,36 +1,76 @@
-import React from 'react'
+"use client"
+import React, { useEffect, useState } from 'react'
 import OrderDetailItem from '@/components/OrderDetailItem';
+import { useSearchParams } from 'next/navigation';
+import { getOrderById } from '@/api/orderApi';
+import { getDetailByOrderId } from '@/api/orderDetailApi';
+import { getUserById } from '@/api/userApi';
 
 export default function OrderDetailsPage() {
-    const order = {
-        id: 1,
-        invoice: "INV-123456",
-        vat: 15,
-        shippingAmount: 5.00,
-        address: {
-            phone: "+1234567890",
-            address: "123 Main St, City, Country",
-        },
-        customer: {
-            name: "John Doe",
-            email: "john@example.com",
-            phone: "+1234567890",
-        },
-        processTime: "2023-10-01 12:00",
-        shippingTime: null,
-        deliveredTime: null,
-        createdAt: "2023-10-01",
-        state: "Processing",
-        paymentMethod: "Cash on Delivery",
-        totalAmount: 100.00,
-        items: [
-            { id: 1, product: { name: "Product1", image: "/images/product1.png", sku: "123" }, quantity: 2, price: 50.00 },
-            { id: 2, product: { name: "Product2", image: "/images/product1.png", sku: "123" }, quantity: 1, price: 50.00 },
-        ]
-    };
-    const subtotal = order.items.reduce((acc, item) => acc + (item.quantity * item.price), 0).toFixed(2);
-    const vatAmount = (subtotal * order.vat / 100).toFixed(2);
-    const grandTotal = (parseFloat(subtotal) + parseFloat(vatAmount) + parseFloat(order.shippingAmount)).toFixed(2);
+    const searchParams = useSearchParams();
+    const orderId = searchParams.get('id');
+    const [order, setOrder] = useState({});
+    const [details, setDetails] = useState([]);
+    const [user, setUser] = useState({});
+    const [subtotal, setSubtotal] = useState(0);
+
+    const fetchOrder = async (id) => {
+        const response = await getOrderById(id);
+        if (response) {
+            setOrder(response);
+            console.log("Order fetched successfully", response);
+        } else {
+            console.error("Failed to fetch order");
+        }
+    }
+
+    const fetchOrderDetails = async (id) => {
+        const reponse = await getDetailByOrderId(id);
+        console.log("Response: ", reponse);
+        if (reponse && reponse.length > 0) {
+            setDetails(reponse);
+            console.log("Order details fetched successfully", reponse);
+        } else {
+            console.log("Failed to fetch order details");
+        }
+    }
+
+    const fetchUser = async (id) => {
+        const response = await getUserById(id);
+        if (response) {
+            setUser(response);
+            console.log("User fetched successfully", response);
+        } else {
+            console.error("Failed to fetch user");
+        }
+    }
+
+    useEffect(() => {
+        const fetchAll = async () => {
+            await fetchOrder(orderId);
+            await fetchOrderDetails(orderId);
+        };
+        if (orderId) fetchAll();
+    }, [orderId]);
+
+    useEffect(
+        () => {
+            if (order && order.userId) {
+                fetchUser(order.userId);
+            }
+        }, [order.userId]
+    );
+
+    useEffect(() => {
+
+        // Tính subtotal khi details thay đổi
+        let st = 0;
+        for (const item of details) {
+            st += item.price * item.quantity;
+        }
+        setSubtotal(st);
+    }, [details]);
+
     return (
         <div className='px-2 py-5'>
             <div className='flex justify-between items-end'>
@@ -54,12 +94,12 @@ export default function OrderDetailsPage() {
                 </div>
                 <div className='flex gap-2'>
                     <div className='rounded-md bg-white border border-[#E0E2E7] px-4 py-2 flex items-center gap-2'>
-                        <select className='w-full  outline-none' name="status" id="status" defaultValue={"Processing"}>
+                        <select className='w-full  outline-none' name="status" id="status" defaultValue={order ? order.status : "pending"} value={order?order.status:"pending"}>
                             <option value="Order Placed">Order Placed</option>
-                            <option value="Processing">Processing</option>
+                            <option value="pending">Processing</option>
                             <option value="Shipping">Shipping</option>
                             <option value="Delivered">Delivered</option>
-                            <option value="Cancelled">Cancelled</option>
+                            <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
                     <button className='flex gap-2 bg-[#ff8200] text-white px-4 py-2 rounded-md'>
@@ -77,11 +117,11 @@ export default function OrderDetailsPage() {
                 <div className='p-5 bg-white rounded-md shadow-md w-2/7 h-fit'>
                     <div className='flex gap-3 items-center'>
                         <h1 className='text-xl font-semibold'>Order #{order.id}</h1>
-                        <div className={`py-1 px-2 rounded-full w-fit ${order.state === "Processing" ?
-                            "bg-[#FDF1E8] text-[#ff8200]" : (order.state === "Shipped" ?
-                                "bg-[#E8F8FD] text-[#13B2E4]" : (order.state === "Cancelled" ?
+                        <div className={`py-1 px-2 rounded-full w-fit ${order.status === "pending" ?
+                            "bg-[#FDF1E8] text-[#ff8200]" : (order.status === "Shipped" ?
+                                "bg-[#E8F8FD] text-[#13B2E4]" : (order.status === "cancelled" ?
                                     "bg-[#FEEDEC] text-[#F04438]" : "bg-[#E7F4EE] text-[#0D894F]"))}`}>
-                            {order.state}
+                            {order.status}
                         </div>
                     </div>
                     <div className='flex justify-between items-center mt-2'>
@@ -94,7 +134,13 @@ export default function OrderDetailsPage() {
                             </svg>
                             Added
                         </div>
-                        <div>{order.createdAt}</div>
+                        <div>
+                            {new Date(order.createdAt).toLocaleDateString("en-US", {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit'
+                            })}
+                        </div>
                     </div>
                     <div className='flex justify-between items-center mt-2'>
                         <div className='flex gap-2 items-center'>
@@ -106,7 +152,7 @@ export default function OrderDetailsPage() {
                             </svg>
                             Payment Method
                         </div>
-                        <div>{order.paymentMethod}</div>
+                        <div>{order.paymentMethod || ""}</div>
                     </div>
                 </div>
                 <div className='p-5 bg-white rounded-md shadow-md w-2/7 '>
@@ -122,7 +168,7 @@ export default function OrderDetailsPage() {
 
                             Customer
                         </div>
-                        <div>{order.customer.name}</div>
+                        <div>{user.name || ""}</div>
                     </div>
                     <div className='flex justify-between items-center mt-2'>
                         <div className='flex gap-2 items-center'>
@@ -133,7 +179,7 @@ export default function OrderDetailsPage() {
                             </svg>
                             Email
                         </div>
-                        <div>{order.customer.email}</div>
+                        <div>{user.email || ""}</div>
                     </div>
                     <div className='flex justify-between items-center mt-2'>
                         <div className='flex gap-2 items-center'>
@@ -145,10 +191,10 @@ export default function OrderDetailsPage() {
                             </svg>
                             Phone
                         </div>
-                        <div>{order.customer.phone}</div>
+                        <div>{user.phone || ""}</div>
                     </div>
                 </div>
-                <div className='p-5 bg-white rounded-md shadow-md w-2/7 h-fit'>
+                {/* <div className='p-5 bg-white rounded-md shadow-md w-2/7 h-fit'>
                     <h1 className='text-xl font-semibold'>Document</h1>
                     <div className='flex justify-between items-center mt-2'>
                         <div className='flex gap-2 items-center'>
@@ -164,19 +210,18 @@ export default function OrderDetailsPage() {
                         </div>
                         <div>{order.invoice}</div>
                     </div>
-                </div>
+                </div> */}
             </div>
             <div className='flex gap-[7%] w-full mt-5'>
                 <div className='w-9/14 p-5 bg-white rounded-md shadow-md h-fit'>
                     <div className='flex w-full gap-4 items-center px-5'>
                         <div className='text-lg font-semibold'>Product List</div>
-                        <div className='bg-[#E7F4EE] text-[#0D894F] rounded-full px-2 py-1'>{order.items.length} Product{order.items.length < 2 ? "" : "s"}</div>
+                        <div className='bg-[#E7F4EE] text-[#0D894F] rounded-full px-2 py-1'>{details.length} Product{details.length < 2 ? "" : "s"}</div>
                     </div>
                     <table className='w-full mt-5'>
                         <thead className='bg-[#F9FAFB] font-medium'>
-                            <tr className='text-left bg-[#F9F9FC] font-semibold border-b border-[#E0E2E7]'>
+                            <tr className='text-center bg-[#F9F9FC] font-semibold border-b border-[#E0E2E7]'>
                                 <th className='py-2 px-4'>Product</th>
-                                <th className='py-2 px-4'>SKU</th>
                                 <th className='py-2 px-4'>Quantity</th>
                                 <th className='py-2 px-4'>Price</th>
                                 <th className='py-2 px-4'>Total</th>
@@ -184,26 +229,19 @@ export default function OrderDetailsPage() {
 
                             </tr>
                         </thead>
-                        <tbody className='text-[#344054] font-normal'>
-                            {order.items.map((item) => (
+                        <tbody className='text-[#344054] font-normal text-center'>
+                            {details.map((item) => (
                                 <OrderDetailItem
                                     key={item.id}
                                     item={item} />
                             ))}
-                            
+
                             <tr>
                                 <td></td>
                                 <td></td>
                                 <td></td>
                                 <td className='py-2 px-4 '>SubTotal</td>
                                 <td className='py-2 px-4 '>${subtotal}</td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td className='py-2 px-4 '>VAT({order.vat}%)</td>
-                                <td className='py-2 px-4 '>${vatAmount}</td>
                             </tr>
                             <tr>
                                 <td></td>
@@ -217,7 +255,7 @@ export default function OrderDetailsPage() {
                                 <td></td>
                                 <td></td>
                                 <td className='py-2 px-4 font-semibold'>Grand Total</td>
-                                <td className='py-2 px-4 font-semibold'>${grandTotal}</td>
+                                <td className='py-2 px-4 font-semibold'>${order ? order.totalPrice : 0}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -233,8 +271,8 @@ export default function OrderDetailsPage() {
                                 <path fillRule="evenodd" clipRule="evenodd" d="M28 18C27.9999 24.8707 22.0992 28.791 20.4332 29.7609C20.1612 29.9192 19.8388 29.9192 19.5668 29.7609C17.9008 28.791 12 24.8707 12 18C12 14 15 10 20 10C25 10 28 14 28 18ZM14 18C14 14.9372 16.2648 12 20 12C23.7352 12 26 14.9372 26 18C26 21.2825 24.3677 23.8038 22.5857 25.5858C21.7002 26.4714 20.8093 27.1401 20.1406 27.5859C20.0924 27.618 20.0455 27.6489 20 27.6785C19.9544 27.6489 19.9075 27.618 19.8594 27.5859C19.1907 27.1401 18.2998 26.4714 17.4142 25.5858C15.6322 23.8038 14 21.2825 14 18Z" fill="#667085" />
                             </svg>
                             <div>
-                                <div className='text-gray-500'>{order.address.phone}</div>
-                                <div>{order.address.address}</div>
+                                <div className='text-gray-500'>{order.phone}</div>
+                                <div>{order.address}</div>
                             </div>
                         </div>
                     </div>
@@ -252,15 +290,21 @@ export default function OrderDetailsPage() {
                             <div>
                                 <div className='text-lg'>Order Placed</div>
                                 <div className='text-gray-500'>An order has been placed.</div>
-                                <div className='text-gray-500 text-sm'>{order.createdAt}</div>
+                                <div className='text-gray-500 text-sm'>
+                                    {new Date(order.createdAt).toLocaleDateString("en-US", {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit'
+                                    })}
+                                </div>
                             </div>
                         </div>
                         <div className='flex gap-2 items-center'>
                             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="2" y="2" width="36" height="36" rx="18" fill={order.state==="Processing"?"#FBE3CA":"#E0E2E7"} />
-                                <rect x="2" y="2" width="36" height="36" rx="18" stroke={order.state==="Processing"?"#EFEFFD":"#F0F1F3"} strokeWidth="4" />
-                                <path d="M13.9359 16.5007C15.1477 14.4058 17.4103 13 20 13C23.5525 13 26.4869 15.6463 26.9395 19.0752L26.2071 18.3429C25.8166 17.9523 25.1834 17.9523 24.7929 18.3429C24.4024 18.7334 24.4024 19.3665 24.7929 19.7571L27.6464 22.6106C27.8417 22.8059 28.1583 22.8059 28.3536 22.6106L31.2071 19.7571C31.5976 19.3665 31.5976 18.7334 31.2071 18.3429C30.8166 17.9523 30.1834 17.9523 29.7929 18.3429L28.9625 19.1732C28.5451 14.5902 24.6918 11 20 11C16.6675 11 13.7593 12.8118 12.2047 15.4993C11.9281 15.9773 12.0915 16.5891 12.5695 16.8656C13.0476 17.1421 13.6593 16.9788 13.9359 16.5007Z" fill={order.state==="Processing"?"#FF8200":"#667085"} />
-                                <path d="M13.7929 22.2571C14.1834 22.6476 14.8166 22.6476 15.2071 22.2571C15.5976 21.8666 15.5976 21.2334 15.2071 20.8429L12.3536 17.9894C12.1583 17.7941 11.8417 17.7941 11.6464 17.9894L8.79289 20.8429C8.40237 21.2334 8.40237 21.8666 8.79289 22.2571C9.18342 22.6476 9.81658 22.6476 10.2071 22.2571L11.1024 21.3619C11.7588 25.6862 15.4924 29 20 29C22.8426 29 25.3779 27.681 27.0256 25.6255C27.3711 25.1946 27.3018 24.5652 26.8708 24.2198C26.4399 23.8743 25.8106 23.9436 25.4651 24.3745C24.1806 25.9769 22.2101 27 20 27C16.707 27 13.9451 24.7262 13.1987 21.663L13.7929 22.2571Z" fill={order.state==="Processing"?"#FF8200":"#667085"} />
+                                <rect x="2" y="2" width="36" height="36" rx="18" fill={order.status === "pending" ? "#FBE3CA" : "#E0E2E7"} />
+                                <rect x="2" y="2" width="36" height="36" rx="18" stroke={order.status === "pending" ? "#EFEFFD" : "#F0F1F3"} strokeWidth="4" />
+                                <path d="M13.9359 16.5007C15.1477 14.4058 17.4103 13 20 13C23.5525 13 26.4869 15.6463 26.9395 19.0752L26.2071 18.3429C25.8166 17.9523 25.1834 17.9523 24.7929 18.3429C24.4024 18.7334 24.4024 19.3665 24.7929 19.7571L27.6464 22.6106C27.8417 22.8059 28.1583 22.8059 28.3536 22.6106L31.2071 19.7571C31.5976 19.3665 31.5976 18.7334 31.2071 18.3429C30.8166 17.9523 30.1834 17.9523 29.7929 18.3429L28.9625 19.1732C28.5451 14.5902 24.6918 11 20 11C16.6675 11 13.7593 12.8118 12.2047 15.4993C11.9281 15.9773 12.0915 16.5891 12.5695 16.8656C13.0476 17.1421 13.6593 16.9788 13.9359 16.5007Z" fill={order.status === "pending" ? "#FF8200" : "#667085"} />
+                                <path d="M13.7929 22.2571C14.1834 22.6476 14.8166 22.6476 15.2071 22.2571C15.5976 21.8666 15.5976 21.2334 15.2071 20.8429L12.3536 17.9894C12.1583 17.7941 11.8417 17.7941 11.6464 17.9894L8.79289 20.8429C8.40237 21.2334 8.40237 21.8666 8.79289 22.2571C9.18342 22.6476 9.81658 22.6476 10.2071 22.2571L11.1024 21.3619C11.7588 25.6862 15.4924 29 20 29C22.8426 29 25.3779 27.681 27.0256 25.6255C27.3711 25.1946 27.3018 24.5652 26.8708 24.2198C26.4399 23.8743 25.8106 23.9436 25.4651 24.3745C24.1806 25.9769 22.2101 27 20 27C16.707 27 13.9451 24.7262 13.1987 21.663L13.7929 22.2571Z" fill={order.status === "pending" ? "#FF8200" : "#667085"} />
                             </svg>
                             <div>
                                 <div className='text-lg'>Processing</div>
@@ -270,9 +314,9 @@ export default function OrderDetailsPage() {
                         </div>
                         <div className='flex gap-2 items-center'>
                             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="2" y="2" width="36" height="36" rx="18" fill={order.state==="Shipping"?"#FBE3CA":"#E0E2E7"} />
-                                <rect x="2" y="2" width="36" height="36" rx="18" stroke={order.state==="Shipping"?"#EFEFFD":"#F0F1F3"} strokeWidth="4" />
-                                <path fillRule="evenodd" clipRule="evenodd" d="M13 13H21C21.5523 13 22 13.4477 22 14V16V23H15.5H13C12.4477 23 12 22.5523 12 22V14C12 13.4477 12.4477 13 13 13ZM22 25H18.3293C18.4398 25.3128 18.5 25.6494 18.5 26C18.5 27.6569 17.1569 29 15.5 29C13.8431 29 12.5 27.6569 12.5 26C12.5 25.6429 12.5624 25.3004 12.6768 24.9828C11.172 24.8216 10 23.5477 10 22V14C10 12.3431 11.3431 11 13 11H21C22.6569 11 24 12.3431 24 14V16H25.6459C26.7822 16 27.821 16.642 28.3292 17.6584L29.7889 20.5777C29.9277 20.8554 30 21.1616 30 21.4721V23C30 23.8316 29.4924 24.5447 28.7702 24.8463C28.9182 25.2015 29 25.5912 29 26C29 27.6569 27.6569 29 26 29C24.3431 29 23 27.6569 23 26C23 25.6494 23.0602 25.3128 23.1707 25H22ZM26 23H28V21.4721L26.5403 18.5528C26.3709 18.214 26.0247 18 25.6459 18H24V23H26ZM26 25C25.4477 25 25 25.4477 25 26C25 26.5523 25.4477 27 26 27C26.5523 27 27 26.5523 27 26C27 25.4477 26.5523 25 26 25ZM14.5 26C14.5 25.4477 14.9477 25 15.5 25C16.0523 25 16.5 25.4477 16.5 26C16.5 26.5523 16.0523 27 15.5 27C14.9477 27 14.5 26.5523 14.5 26Z" fill={order.state==="Shipping"?"#FF8200":"#667085"} />
+                                <rect x="2" y="2" width="36" height="36" rx="18" fill={order.status === "Shipping" ? "#FBE3CA" : "#E0E2E7"} />
+                                <rect x="2" y="2" width="36" height="36" rx="18" stroke={order.status === "Shipping" ? "#EFEFFD" : "#F0F1F3"} strokeWidth="4" />
+                                <path fillRule="evenodd" clipRule="evenodd" d="M13 13H21C21.5523 13 22 13.4477 22 14V16V23H15.5H13C12.4477 23 12 22.5523 12 22V14C12 13.4477 12.4477 13 13 13ZM22 25H18.3293C18.4398 25.3128 18.5 25.6494 18.5 26C18.5 27.6569 17.1569 29 15.5 29C13.8431 29 12.5 27.6569 12.5 26C12.5 25.6429 12.5624 25.3004 12.6768 24.9828C11.172 24.8216 10 23.5477 10 22V14C10 12.3431 11.3431 11 13 11H21C22.6569 11 24 12.3431 24 14V16H25.6459C26.7822 16 27.821 16.642 28.3292 17.6584L29.7889 20.5777C29.9277 20.8554 30 21.1616 30 21.4721V23C30 23.8316 29.4924 24.5447 28.7702 24.8463C28.9182 25.2015 29 25.5912 29 26C29 27.6569 27.6569 29 26 29C24.3431 29 23 27.6569 23 26C23 25.6494 23.0602 25.3128 23.1707 25H22ZM26 23H28V21.4721L26.5403 18.5528C26.3709 18.214 26.0247 18 25.6459 18H24V23H26ZM26 25C25.4477 25 25 25.4477 25 26C25 26.5523 25.4477 27 26 27C26.5523 27 27 26.5523 27 26C27 25.4477 26.5523 25 26 25ZM14.5 26C14.5 25.4477 14.9477 25 15.5 25C16.0523 25 16.5 25.4477 16.5 26C16.5 26.5523 16.0523 27 15.5 27C14.9477 27 14.5 26.5523 14.5 26Z" fill={order.status === "Shipping" ? "#FF8200" : "#667085"} />
                             </svg>
 
                             <div>
@@ -282,9 +326,9 @@ export default function OrderDetailsPage() {
                         </div>
                         <div className='flex gap-2 items-center'>
                             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="2" y="2" width="36" height="36" rx="18" fill={order.state==="Delivered"?"#FBE3CA":"#E0E2E7"} />
-                                <rect x="2" y="2" width="36" height="36" rx="18" stroke={order.state==="Delivered"?"#EFEFFD":"#F0F1F3"} strokeWidth="4" />
-                                <path fillRule="evenodd" clipRule="evenodd" d="M27.1364 13.7287C27.5624 14.0801 27.6229 14.7104 27.2714 15.1364L18.6925 25.5351C18.5126 25.7531 18.1879 25.7788 17.976 25.5918L13.3384 21.4999C12.9243 21.1345 12.8848 20.5025 13.2502 20.0884C13.6156 19.6743 14.2475 19.6348 14.6616 20.0002L18.1365 23.0662L25.7286 13.8636C26.0801 13.4376 26.7104 13.3772 27.1364 13.7287Z" fill={order.state==="Delivered"?"#FF8200":"#667085"} />
+                                <rect x="2" y="2" width="36" height="36" rx="18" fill={order.status === "Delivered" ? "#FBE3CA" : "#E0E2E7"} />
+                                <rect x="2" y="2" width="36" height="36" rx="18" stroke={order.status === "Delivered" ? "#EFEFFD" : "#F0F1F3"} strokeWidth="4" />
+                                <path fillRule="evenodd" clipRule="evenodd" d="M27.1364 13.7287C27.5624 14.0801 27.6229 14.7104 27.2714 15.1364L18.6925 25.5351C18.5126 25.7531 18.1879 25.7788 17.976 25.5918L13.3384 21.4999C12.9243 21.1345 12.8848 20.5025 13.2502 20.0884C13.6156 19.6743 14.2475 19.6348 14.6616 20.0002L18.1365 23.0662L25.7286 13.8636C26.0801 13.4376 26.7104 13.3772 27.1364 13.7287Z" fill={order.status === "Delivered" ? "#FF8200" : "#667085"} />
                             </svg>
 
                             <div>

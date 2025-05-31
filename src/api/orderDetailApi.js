@@ -10,14 +10,14 @@ const getDetailByOrderId = async (orderId) => {
         });
         if (!response.ok) {
             console.log('Failed to fetch order details by ID');
-            return null;
+            return [];
         }
         const data = await response.json();
-        console.log(data);
-        return data.data;
+        console.log("Data: ", data);
+        return data.data.content;
     } catch (error) {
-        console.error('Error fetching order details:', error);
-        return null;
+        console.log('Error fetching order details:', error);
+        return [];
     }
 }
 

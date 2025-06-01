@@ -1,77 +1,54 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import AdminProductItem from '@/components/AdminProductItem';
+import { getAllProducts, deleteProductById } from '@/api/productApi';
+import { getAllCategories } from '@/api/categoryApi';
 
 export default function Product() {
-    const [products, setProducts] = useState([
-        {
-            id: 1,
-            name: 'Product 1',
-            sku: 'SKU001',
-            category: 'Category 1',
-            stock: 10,
-            price: 100,
-            discount: 10,
-            createdTime: '2023-01-01',
-            image: '/images/product1.png',
-            isChecked: false,
-        },
-        {
-            id: 2,
-            name: 'Product 2',
-            sku: 'SKU002',
-            category: 'Category 2',
-            stock: 20,
-            price: 200,
-            discount: 20,
-            createdTime: '2023-02-01',
-            image: '/images/product1.png',
-            isChecked: false,
-        },
-        {
-            id: 3,
-            name: 'Product 3',
-            sku: 'SKU003',
-            category: 'Category 3',
-            stock: 30,
-            price: 300,
-            discount: 30,
-            createdTime: '2023-03-01',
-            image: '/images/product1.png',
-            isChecked: false,
-        },
-        {
-            id: 4,
-            name: 'Product 4',
-            sku: 'SKU004',
-            category: 'Category 4',
-            stock: 40,
-            price: 400,
-            discount: 40,
-            createdTime: '2023-04-01',
-            image: '/images/product1.png',
-            isChecked: false,
-        },
-        {
-            id: 5,
-            name: 'Product 5',
-            sku: 'SKU005',
-            category: 'Category 5',
-            stock: 50,
-            price: 500,
-            discount: 50,
-            createdTime: '2023-05-01',
-            image: '/images/product1.png',
-            isChecked: false,
-        },
-            
-    ]);
-    const [isAllChecked, setIsAllChecked] = useState(false); // Trạng thái checkbox của thead
+    const [products, setProducts] = useState([]);
+    const [displayedProducts, setDisplayedProducts] = useState([]);
+    const [isCheck, setIsCheck] = useState(false);
+    const [showFilter, setShowFilter] = useState(false);
+    const [isAllChecked, setIsAllChecked] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const [brand, setBrand] = useState([]);
+    const [minPrice, setMinPrice] = useState(0);
+    const [maxPrice, setMaxPrice] = useState(Infinity);
+    const [filterMin, setFilterMin] = useState(minPrice);
+    const [filterMax, setFilterMax] = useState(maxPrice);
+    const filterRef = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (filterRef.current && !filterRef.current.contains(event.target)) {
+                setShowFilter(false);
+            }
+        }
+        if (showFilter) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showFilter]);
+
+    useEffect(() => {
+        setFilterMin(minPrice);
+        setFilterMax(maxPrice);
+    }, [minPrice, maxPrice]);
+
     const handleSelectAll = () => {
         const newCheckedState = !isAllChecked;
         setIsAllChecked(newCheckedState);
         setProducts(products.map(product => ({ ...product, isChecked: newCheckedState })));
     };
+
+    const fetchCategory = async () => {
+        const response = await getAllCategories();
+        if (response.data.content) {
+            setCategories(response.data.content);
+        }
+    }
 
     // Hàm xử lý khi checkbox trong tbody được chọn
     const handleProductCheck = (id) => {
@@ -84,6 +61,112 @@ export default function Product() {
         const allChecked = updateProducts.every(product => product.isChecked);
         setIsAllChecked(allChecked);
     };
+
+    const fetchProducts = async () => {
+        const response = await getAllProducts();
+        if (response) {
+            const productsWithCheck = response.map(product => ({
+                ...product,
+                isChecked: false // Thêm thuộc tính isChecked vào từng sản phẩm
+            }));
+            setProducts(productsWithCheck);
+            setDisplayedProducts(productsWithCheck);
+            console.log(productsWithCheck);
+        }
+    }
+
+    const handleSearchChange = (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filteredProducts = products.filter(product =>
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.brand.toLowerCase().includes(searchTerm) ||
+            product.category.name.toLowerCase().includes(searchTerm)
+        );
+        setDisplayedProducts(filteredProducts);
+    }
+
+    const deleteProduct = async (id) => {
+        const response = await deleteProductById(id);
+        if (response) {
+            setProducts(products.filter(product => product.id !== id));
+            setDisplayedProducts(displayedProducts.filter(product => product.id !== id));
+        } else {
+            console.log('Failed to delete product');
+            alert('Failed to delete product with ID: ' + id);
+        }
+    }
+
+    const hanndleDeleteProduct = (id) => {
+        if (window.confirm('Are you sure you want to delete this product?')) {
+            if (deleteProduct(id)) {
+                alert('Product deleted successfully');
+            }
+            else {
+                alert('Failed to delete product');
+            }
+        }
+    }
+
+    const handleDeleteSelectedProducts = () => {
+        const selectedProducts = products.filter(product => product.isChecked);
+        if (selectedProducts.length === 0) {
+            alert('No products selected for deletion');
+            return;
+        }
+
+        if (window.confirm(`Are you sure you want to delete ${selectedProducts.length} selected products?`)) {
+            selectedProducts.forEach(product => {
+                deleteProduct(product.id);
+            });
+            setIsCheck(false);
+            setIsAllChecked(false);
+        }
+    }
+    const handleFilterChange = () => {
+        const selectedBrand = document.getElementById('brand').value;
+        const selectedCategory = document.getElementById('category').value;
+        const minPrice = parseFloat(document.getElementById('min').value) || 0;
+        const maxPrice = parseFloat(document.getElementById('max').value) || Infinity;
+        let filteredProducts = products;
+        if (selectedBrand) {
+            filteredProducts = filteredProducts.filter(product => product.brand === selectedBrand);
+        }
+        if (selectedCategory) {
+            filteredProducts = filteredProducts.filter(product => String(product.category.id) === selectedCategory);
+        }
+        if (minPrice || maxPrice < Infinity) {
+            filteredProducts = filteredProducts.filter(product => {
+                const price = parseFloat(product.price);
+                return price >= minPrice && price <= maxPrice;
+            });
+        }
+        setDisplayedProducts(filteredProducts);
+        setShowFilter(false);
+    }
+
+    useEffect(() => {
+        const anyChecked = products.some(product => product.isChecked);
+        setIsCheck(anyChecked);
+        setDisplayedProducts(products);
+        const brand = Array.from(new Set(products.map(product => product.brand)));
+        setBrand(brand);
+        const minPrice = Math.min(...products.map(product => parseFloat(product.price)));
+        const maxPrice = Math.max(...products.map(product => parseFloat(product.price)));
+        if (minPrice > maxPrice) {
+            setMinPrice(0);
+            setMaxPrice(Infinity);
+        }
+        setMinPrice(minPrice);
+        setMaxPrice(maxPrice);
+    }, [products]);
+
+    useEffect(() => {
+        const fetchAll = async () => {
+            await fetchProducts();
+            await fetchCategory();
+        }
+        fetchAll();
+    }, []);
 
     return (
         <div className='px-2 py-5'>
@@ -114,6 +197,16 @@ export default function Product() {
                         </svg>
                         Add Product
                     </button>
+                    {isCheck && (
+                        <button className='bg-[#ff8200] text-white px-4 py-2 rounded-md flex gap-2 items-center' onClick={handleDeleteSelectedProducts}>
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8.33317 8.12484C8.79341 8.12484 9.1665 8.49793 9.1665 8.95817V13.9582C9.1665 14.4184 8.79341 14.7915 8.33317 14.7915C7.87293 14.7915 7.49984 14.4184 7.49984 13.9582V8.95817C7.49984 8.49793 7.87293 8.12484 8.33317 8.12484Z" fill="#fff" />
+                                <path d="M12.4998 8.95817C12.4998 8.49793 12.1267 8.12484 11.6665 8.12484C11.2063 8.12484 10.8332 8.49793 10.8332 8.95817V13.9582C10.8332 14.4184 11.2063 14.7915 11.6665 14.7915C12.1267 14.7915 12.4998 14.4184 12.4998 13.9582V8.95817Z" fill="#fff" />
+                                <path fillRule="evenodd" clipRule="evenodd" d="M14.9998 4.99984V4.1665C14.9998 2.78579 13.8806 1.6665 12.4998 1.6665H7.49984C6.11913 1.6665 4.99984 2.78579 4.99984 4.1665V4.99984H3.74984C3.2896 4.99984 2.9165 5.37293 2.9165 5.83317C2.9165 6.29341 3.2896 6.6665 3.74984 6.6665H4.1665V15.8332C4.1665 17.2139 5.28579 18.3332 6.6665 18.3332H13.3332C14.7139 18.3332 15.8332 17.2139 15.8332 15.8332V6.6665H16.2498C16.7101 6.6665 17.0832 6.29341 17.0832 5.83317C17.0832 5.37293 16.7101 4.99984 16.2498 4.99984H14.9998ZM12.4998 3.33317H7.49984C7.0396 3.33317 6.6665 3.70627 6.6665 4.1665V4.99984H13.3332V4.1665C13.3332 3.70627 12.9601 3.33317 12.4998 3.33317ZM14.1665 6.6665H5.83317V15.8332C5.83317 16.2934 6.20627 16.6665 6.6665 16.6665H13.3332C13.7934 16.6665 14.1665 16.2934 14.1665 15.8332V6.6665Z" fill="#fff" />
+                            </svg>
+                            Delete
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -122,9 +215,9 @@ export default function Product() {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path fillRule="evenodd" clipRule="evenodd" d="M14.7844 16.1991C11.646 18.6416 7.10629 18.4205 4.22156 15.5358C1.09737 12.4116 1.09737 7.34625 4.22156 4.22205C7.34576 1.09786 12.4111 1.09786 15.5353 4.22205C18.42 7.10677 18.6411 11.6464 16.1986 14.7849L20.4851 19.0713C20.8756 19.4618 20.8756 20.095 20.4851 20.4855C20.0945 20.876 19.4614 20.876 19.0708 20.4855L14.7844 16.1991ZM5.63578 14.1215C7.97892 16.4647 11.7779 16.4647 14.1211 14.1215C16.4642 11.7784 16.4642 7.97941 14.1211 5.63627C11.7779 3.29312 7.97892 3.29312 5.63578 5.63627C3.29263 7.97941 3.29263 11.7784 5.63578 14.1215Z" fill="#667085" />
                     </svg>
-                    <input type='text' placeholder='Search product...' className='px-2 py-2 outline-none' />
+                    <input type='text' placeholder='Search product...' className='px-2 py-2 outline-none' onChange={handleSearchChange} />
                 </div>
-                <button className='text-[#667085] border border-[#E0E2E7] bg-white rounded-md px-4 py-2 flex items-center gap-2'>
+                <button className='text-[#667085] border border-[#E0E2E7] bg-white rounded-md px-4 py-2 flex items-center gap-2' onClick={() => setShowFilter(!showFilter)}>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10.8333 6.66667C10.8333 7.1269 11.2064 7.5 11.6667 7.5C12.1269 7.5 12.5 7.1269 12.5 6.66667V5.83333H16.6667C17.1269 5.83333 17.5 5.46024 17.5 5C17.5 4.53976 17.1269 4.16667 16.6667 4.16667H12.5V3.33333C12.5 2.8731 12.1269 2.5 11.6667 2.5C11.2064 2.5 10.8333 2.8731 10.8333 3.33333V6.66667Z" fill="#667085" />
                         <path d="M2.5 10C2.5 9.53976 2.8731 9.16667 3.33333 9.16667H4.58333C4.81345 9.16667 5 9.35321 5 9.58333V10.4167C5 10.6468 4.81345 10.8333 4.58333 10.8333H3.33333C2.8731 10.8333 2.5 10.4602 2.5 10Z" fill="#667085" />
@@ -135,12 +228,51 @@ export default function Product() {
                     </svg>
                     Filters
                 </button>
+                {showFilter && (
+                    <div
+                        ref={filterRef}
+                        className='absolute top-65 right-10 bg-white shadow-lg rounded-md p-4 w-64'>
+                        <h3 className='text-lg font-semibold mb-2'>Filter Options</h3>
+                        <div className='mb-4'>
+                            <label className='block mb-2 text-sm font-medium text-gray-700'>Brand</label>
+                            <select id='brand' className='w-full mb-3 border border-[#E0E2E7] rounded-md px-2 py-1' defaultValue={''}>
+                                <option value=''>All Brands</option>
+                                {brand.map((b, index) => (
+                                    <option key={index} value={b}>{b}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className='mb-4'>
+                            <label className='block mb-2 text-sm font-medium text-gray-700'>Category</label>
+                            <select id='category' className='w-full mb-3 border border-[#E0E2E7] rounded-md px-2 py-1' defaultValue={''}>
+                                <option value=''>All Categories</option>
+                                {categories.map((category) => (
+                                    <option key={category.id} value={category.id}>{category.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className='mb-4'>
+                            <label className='block mb-2 text-sm font-medium text-gray-700'>Price Range</label>
+                            <div className='flex w-full justify-between items-center'>
+                                <label htmlFor='min' className='block mb-1 text-sm'>Min: {filterMin}</label>
+                                <input type='range' id='min' className='' min={minPrice} max={filterMax} value={filterMin}
+                                    onChange={(e) => { setFilterMin(Number(e.target.value)) }} />
+                            </div>
+                            <div className='mt-2 flex w-full justify-between items-center'>
+                                <label htmlFor='max' className='block mb-1 text-sm'>Max:{filterMax}</label>
+                                <input type='range' id='max' min={filterMin} max={maxPrice} value={filterMax}
+                                    onChange={(e) => { setFilterMax(Number(e.target.value)) }} />
+                            </div>
+                        </div>
+                        <button className='bg-[#ff8200] text-white px-4 py-2 rounded-md w-full' onClick={handleFilterChange}>Apply Filters</button>
+                    </div>
+                )}
             </div>
 
             <div className=' shadow-md rounded-md border border-[#E0E2E7] mt-5'>
                 <table className='w-full py-2 rounded-md overflow-hidden '>
                     <thead className='bg-[#F9F9FC] font-medium border-b border-[#F0F1F3]'>
-                        <tr className='text-left text-[#344054] font-semibold rounded-md'>
+                        <tr className='text-center text-[#344054] font-semibold rounded-md'>
                             <th>
                                 <input
                                     type='checkbox'
@@ -150,7 +282,7 @@ export default function Product() {
                                 />
                             </th>
                             <th className='py-2 px-4'>Product</th>
-                            <th className='py-2 px-4'>SKU</th>
+                            <th className='py-2 px-4'>Brand</th>
                             <th className='py-2 px-4'>Category</th>
                             <th className='py-2 px-4'>Stock</th>
                             <th className='py-2 px-4'>Price</th>
@@ -161,12 +293,13 @@ export default function Product() {
 
                         </tr>
                     </thead>
-                    <tbody className='text-[#344054] font-normal'>
-                        {products.map((product) => (
+                    <tbody className='text-[#344054] font-normal text-center'>
+                        {displayedProducts.map((product) => (
                             <AdminProductItem
                                 key={product.id}
                                 product={product}
                                 onCheck={() => handleProductCheck(product.id)}
+                                onDelete={() => hanndleDeleteProduct(product.id)}
                             />
                         ))}
                     </tbody>

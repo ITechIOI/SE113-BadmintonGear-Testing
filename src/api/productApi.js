@@ -42,4 +42,25 @@ const getProductById = async (productId) => {
     }
 }
 
-export { getAllProducts, getProductById };
+const deleteProductById = async (productId) => {
+    try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/products/products/${productId}`;
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) {
+            console.log('Failed to delete product by ID');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Error deleting product by ID:', error);
+        return false;
+    }
+}
+
+export { getAllProducts, getProductById, deleteProductById };

@@ -1,12 +1,37 @@
 "use client"
 import React, { useState } from 'react'
 import Image from 'next/image';
+import { getAllCategories } from '@/api/categoryApi';
+import { addProduct } from '@/api/productApi';
 
 export default function AddProduct() {
 
     const [imagePreviews, setImagePreviews] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
-    const [category, setCategory] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [inputData, setInputData] = useState({});
+
+    const fetchCategories = async () => {
+        const response = await getAllCategories();
+        if (response.data.content) {
+            setCategories(response.data.content);
+        }
+    }
+
+    const hadleInputChange = () => {
+        const name = document.getElementById('name').value;
+        const description = document.getElementById('description').value;
+        const price = document.getElementById('price').value;
+        const quantity = document.getElementById('quantity').value;
+        const category = document.getElementById('category').value;
+        setInputData({
+            name: name,
+            description: description,
+            price: price,
+            quantity: quantity,
+            categoryId: category
+        });
+    }
 
     const handleImageUpload = (event) => {
         const files = Array.from(event.target.files); // Lấy danh sách tệp
@@ -22,6 +47,26 @@ export default function AddProduct() {
             setImagePreviews((prev) => [...prev, ...results]); // Thêm ảnh mới vào danh sách
         });
     };
+
+    const handleSave = async () => {
+        const productData = new FormData();
+        productData.append('name', inputData.name);
+        productData.append('description', inputData.description);
+        productData.append('price', inputData.price);
+        productData.append('quantity', inputData.quantity);
+        productData.append('categoryId', inputData.categoryId);
+        productData.append('available', 'available');
+        imagePreviews.forEach((image, index) => {
+            productData.append(`file`, image);
+        });
+        const response = await addProduct(productData);
+        if (response) {
+            alert('Product added successfully');
+            window.location.href = '/admin/productlist'; // Chuyển hướng đến danh sách sản phẩm
+        } else {
+            alert('Failed to add product');
+        }
+    }
 
     const handleDragOver = (event) => {
         event.preventDefault();
@@ -76,7 +121,8 @@ export default function AddProduct() {
                         </svg>
                         Cancel</button>
                     <button className='bg-[#ff8200] text-white px-4 py-2 rounded-md flex gap-2 items-center'
-                    >
+                        onClick={handleSave}
+                        disabled={!inputData || !inputData.name || !inputData.description || !inputData.price || !inputData.quantity || !inputData.categoryId || imagePreviews.length === 0}>
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M9.16667 15.4167C9.16667 15.8769 9.53976 16.25 10 16.25C10.4602 16.25 10.8333 15.8769 10.8333 15.4167V10.8333H15.4167C15.8769 10.8333 16.25 10.4602 16.25 10C16.25 9.53976 15.8769 9.16667 15.4167 9.16667H10.8333V4.58333C10.8333 4.1231 10.4602 3.75 10 3.75C9.53976 3.75 9.16667 4.1231 9.16667 4.58333V9.16667H4.58333C4.1231 9.16667 3.75 9.53976 3.75 10C3.75 10.4602 4.1231 10.8333 4.58333 10.8333H9.16667V15.4167Z" fill="white" />
                         </svg>
@@ -90,14 +136,14 @@ export default function AddProduct() {
                         <h2 className='text-xl font-semibold'>General Information</h2>
                         <div className='mt-2 gap-1'>
                             <label className='text-sm font-medium ml-2'>Product Name</label>
-                            <input type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2  outline-none'
-                                placeholder='Type product name here...' />
+                            <input id='name' type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2  outline-none'
+                                placeholder='Type product name here...' onChange={hadleInputChange} />
                         </div>
 
                         <div className='mt-2 gap-1'>
                             <label className='text-sm font-medium ml-2'>Description</label>
-                            <textarea className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2 resize-none  outline-none'
-                                placeholder='Type product description here...' rows="6" />
+                            <textarea id='description' className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2 resize-none  outline-none'
+                                placeholder='Type product description here...' rows="6" onChange={hadleInputChange} />
                         </div>
                     </div>
 
@@ -158,60 +204,19 @@ export default function AddProduct() {
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path fillRule="evenodd" clipRule="evenodd" d="M11 20C11 20.5523 11.4477 21 12 21C12.5523 21 13 20.5523 13 20V19.7465C15.5014 19.651 17.5 17.593 17.5 15.0682C17.5 12.8214 15.6786 11 13.4318 11H13V6.27392C13.797 6.37092 14.5238 6.75823 15.0475 7.34945C15.4137 7.76288 15.9953 8.00555 16.5 7.78125C17.0047 7.55695 17.2392 6.95834 16.9237 6.50507C16.0259 5.21544 14.5875 4.38385 13 4.26478V4C13 3.44772 12.5523 3 12 3C11.4477 3 11 3.44772 11 4V4.25347C8.49857 4.34898 6.5 6.40701 6.5 8.93182C6.5 11.1786 8.32139 13 10.5682 13H11V17.7261C10.203 17.6291 9.4762 17.2418 8.95253 16.6505C8.58633 16.2371 8.00468 15.9944 7.5 16.2188C6.99532 16.4431 6.76079 17.0417 7.07633 17.4949C7.97411 18.7846 9.41252 19.6161 11 19.7352V20ZM13 17.7439C14.3963 17.6505 15.5 16.4882 15.5 15.0682C15.5 13.926 14.574 13 13.4318 13H13V17.7439ZM11 11V6.25607C9.60366 6.34955 8.5 7.5118 8.5 8.93182C8.5 10.074 9.42596 11 10.5682 11H11Z" fill="#667085" />
                                 </svg>
-                                <input type="text" className='w-full outline-none'
-                                    placeholder='Type product base price here...' />
+                                <input id='price' type="number" className='w-full outline-none' min={0}
+                                    placeholder='Type product base price here...' onChange={hadleInputChange} />
                             </div>
-                        </div>
-                        <div className='mt-2 gap-1'>
-                            <label className='text-sm font-medium ml-2'>Discount Precentage (%)</label>
-                            <input type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2  outline-none'
-                                placeholder='Type discount precentage. . .' />
-                        </div>
-                        <div className='mt-2 gap-1'>
-                            <label className='text-sm font-medium ml-2'>VAT Amount (%)</label>
-                            <input type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2 outline-none '
-                                placeholder='Type VAT amount. . .' />
                         </div>
                     </div>
 
                     <div className='bg-white shadow-md rounded-lg p-5 mt-5'>
                         <h2 className='text-xl font-semibold'>Inventory</h2>
                         <div className='mt-2 justify-between flex'>
-                            <div className='gap-1 w-4/9'>
-                                <label className='text-sm font-medium ml-2'>SKU</label>
-                                <input type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2 outline-none '
-                                    placeholder='Type product SKU here. . .' />
-                            </div>
                             <div className=' gap-1 w-4/9'>
                                 <label className='text-sm font-medium ml-2'>Quantity</label>
-                                <input type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2  outline-none'
-                                    placeholder='Type product quantity here. . .' />
-                            </div>
-                        </div>
-
-                    </div>
-                    <div className='bg-white shadow-md rounded-lg p-5 mt-5'>
-                        <h2 className='text-xl font-semibold'>Inventory</h2>
-                        <div className='mt-2 justify-between flex'>
-                            <div className='gap-1 w-1/5'>
-                                <label className='text-sm font-medium ml-2'>Weight</label>
-                                <input type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2 outline-none '
-                                    placeholder='Product weight (g). . .' />
-                            </div>
-                            <div className=' gap-1 w-1/5'>
-                                <label className='text-sm font-medium ml-2'>Height</label>
-                                <input type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2 outline-none '
-                                    placeholder='Height (cm). . .' />
-                            </div>
-                            <div className='gap-1 w-1/5'>
-                                <label className='text-sm font-medium ml-2'>Length</label>
-                                <input type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2  outline-none'
-                                    placeholder='Length (cm). . .' />
-                            </div>
-                            <div className=' gap-1 w-1/5'>
-                                <label className='text-sm font-medium ml-2'>Width</label>
-                                <input type="text" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2 outline-none'
-                                    placeholder='Width (cm). . .' />
+                                <input id='quantity' type="number" className='border border-[#E0E2E7] bg-[#F9F9FC] rounded-md w-full px-3 py-2  outline-none'
+                                    placeholder='Type product quantity here. . .' onChange={hadleInputChange} />
                             </div>
                         </div>
 
@@ -222,10 +227,10 @@ export default function AddProduct() {
                         <h2 className='text-xl font-semibold'>Category</h2>
                         <div className=' gap-1 mt-2'>
                             <label className='text-sm font-medium ml-2'>Product Category</label>
-                            <select className='w-full border border-[#E0E2E7] bg-[#F9F9FC] rounded-md px-4 py-2 outline-none '
-                                defaultValue={0}>
+                            <select id='category' className='w-full border border-[#E0E2E7] bg-[#F9F9FC] rounded-md px-4 py-2 outline-none '
+                                defaultValue={0} onChange={hadleInputChange}>
                                 <option value="0" disabled>Select Category</option>
-                                {category.map((item, index) => (
+                                {categories.map((item, index) => (
                                     <option key={index} value={item.id}>{item.name}</option>
                                 ))}
                             </select>

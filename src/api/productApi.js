@@ -63,4 +63,94 @@ const deleteProductById = async (productId) => {
     }
 }
 
-export { getAllProducts, getProductById, deleteProductById };
+const addProduct = async (productData) => {
+    try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/products/products/new`;
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: productData,
+        });
+        if (!response.ok) {
+            console.log('Failed to add product');
+            return null;
+        }
+        const data = await response.json();
+        return data.data;
+    } catch (error) {
+        console.error('Error adding product:', error);
+        return null;
+    }
+}
+
+const updateProduct = async (productId, productData) => {
+    try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/products/products/${productId}`;
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(productData),
+        });
+        if (!response.ok) {
+            console.log('Failed to update product');
+            return null;
+        }
+        const data = await response.json();
+        return data.data;
+    } catch (error) {
+        console.error('Error updating product:', error);
+        return null;
+    }
+}
+
+const uploadImage = async (imageData) => {
+    try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/products/cloudinary/upload`;
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: imageData,
+        });
+        if (!response.ok) {
+            console.log('Failed to upload image');
+            return null;
+        }
+        const data = await response.text();
+        return data;
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        return null;
+    }
+}
+
+const deleteImage = async (deleteData) => {
+    try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/products/cloudinary/delete`;
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: deleteData,
+        });
+        const data = await response.text();
+
+        return (data.toString().trim());
+    } catch (error) {
+        console.log('Error deleting image:', error);
+        return null;
+    }
+}
+
+export { getAllProducts, getProductById, deleteProductById, addProduct, updateProduct, uploadImage, deleteImage };

@@ -163,6 +163,7 @@ export default function Product() {
     useEffect(() => {
         const fetchAll = async () => {
             await fetchProducts();
+            await new Promise(resolve => setTimeout(resolve, 500)); // Delay 500ms
             await fetchCategory();
         }
         fetchAll();

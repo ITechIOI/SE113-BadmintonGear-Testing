@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import CartItem from '@/components/CartItem';
-import { getCart, deleteCartm } from '@/api/cartApi';
+import { getCart, deleteCart } from '@/api/cartApi';
 import { getAllProducts } from '@/api/productApi';
+import { getPromotionByCode } from '@/api/promotionApi';
 
 export default function Cart() {
     const [subtotal, setSubtotal] = useState(0);
@@ -11,6 +12,9 @@ export default function Cart() {
     const [isAllChecked, setIsAllChecked] = useState(false); // Trạng thái checkbox của thead
     const [products, setProducts] = useState([]); // Danh sách sản phẩm
     const [items, setItems] = useState([]);
+    const [couponCode, setCouponCode] = useState('');
+    const [promotion, setPromotion] = useState(0);
+    const [discount, setDiscount] = useState({});
 
     const fetchCartItems = async (productsList) => {
         const cartItems = await getCart();
@@ -60,6 +64,28 @@ export default function Cart() {
     //     const response = await getAllProducts();
     //     setProducts(response || []);
     // };
+
+    const getPromotions = async () => {
+        if (couponCode === "") {
+            setPromotion(0);
+            return;
+        }
+        const promotionData = await getPromotionByCode(couponCode);
+        if (promotionData) {
+            console.log("Promotion data:", promotionData);
+            if (subtotal >= promotionData.minOrderValue) {
+                setPromotion(promotionData.percent);
+                setDiscount(promotionData);
+            }
+            else {
+                alert(`Minimum order value for this promotion is ${promotionData.minOrderValue.toLocaleString()} VND`);
+                setPromotion(0);
+            }
+        } else {
+            alert("Invalid coupon code");
+            setPromotion(0);
+        }
+    }
 
     const fetchData = async () => {
         const productsList = await getAllProducts();
@@ -146,22 +172,33 @@ export default function Cart() {
                 </button>
                 <div className='flex justify-between items-start mt-5'>
                     <div className='flex w-1/2'>
-                        <input type='text' placeholder='Coupon Code' className='border border-gray-500 rounded-xs px-4 py-3 w-3/5' />
-                        <button className='bg-[#FF8200] text-white rounded-xs px-10 py-3 ml-5'>Apply Coupon</button>
+                        <input type='text' placeholder='Coupon Code' className='border border-gray-500 rounded-xs px-4 py-3 w-3/5'
+                            onChange={e => {
+                                setCouponCode(e.target.value);
+                            }} />
+                        <button className='bg-[#FF8200] text-white rounded-xs px-10 py-3 ml-5 cursor-pointer disabled:cursor-not-allowed'
+                            disabled={couponCode === ""}
+                            onClick={getPromotions}>Apply Coupon</button>
                     </div>
                     <div className='w-1/3 border-2 rounded-md px-10 py-5 flex flex-col'>
                         <label className='w-full text-lg font-medium mb-5 text-center'>Cart Total</label>
                         <div className='border-b border-gray-500 flex justify-between pb-3 mb-3'>
                             <p className='text-left'>Subtotal:</p>
-                            <p className='text-right'>${subtotal}</p>
+                            <p className='text-right'>{Number(subtotal).toLocaleString()} VND</p>
                         </div>
                         <div className='border-b border-gray-500 flex justify-between pb-3 mb-3'>
                             <p className='text-left'>Shipping:</p>
-                            <p className='text-right'>{shipping === 0 ? "Free" : `$${shipping}`}</p>
+                            <p className='text-right'>{shipping === 0 ? "Free" : `${Number(shipping).toLocaleString()}`} VND</p>
                         </div>
+                        {promotion > 0 && (
+                            <div className='border-b border-gray-500 flex justify-between pb-3 mb-3'>
+                                <p className='text-left'>Promotion:</p>
+                                <p className='text-right'>- {Number(promotion).toLocaleString()} %</p>
+                            </div>
+                        )}
                         <div className='flex justify-between mb-3'>
                             <p className='text-left'>Total:</p>
-                            <p className='text-right'>${subtotal + shipping}</p>
+                            <p className='text-right'>{Number(subtotal + shipping - promotion * subtotal / 100).toLocaleString()} VND</p>
                         </div>
                         <button className='bg-[#FF8200] text-white rounded-xs px-10 py-3 mt-5 w-fit mx-auto'
                             onClick={() => {
@@ -171,6 +208,7 @@ export default function Cart() {
                                     return;
                                 }
                                 localStorage.setItem('checkout_items', JSON.stringify(checkedItems));
+                                localStorage.setItem('discount', JSON.stringify(discount));
                                 window.location.href = "/checkout";
                             }}>Process To Check Out</button>
                     </div>

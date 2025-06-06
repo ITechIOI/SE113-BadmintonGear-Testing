@@ -1,10 +1,16 @@
 "use client"
 import { ProductCard } from "@/components/ProductCard"
 import TimeCountdown from "@/components/TimeCountdown"
-import { Input } from "postcss"
 import Image from "next/image"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { getAllProducts } from "@/api/productApi"
+import { getReviews } from "@/api/reviewApi"
+
 export default function Page() {
+  const [products, setProducts] = useState([]);
+  const [bestSellingProducts, setBestSellingProducts] = useState([]);
+  const [flashSaleProducts, setFlashSaleProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(999);
   const [category, setCategory] = useState("All");
@@ -14,11 +20,20 @@ export default function Page() {
   const listOfCategories = ["All", "Rackets", "Shuttlecock", "Shoes", "Clothes", "Bags", "Others"];
   const listOfBrands = ["All", "Nike", "Adidas", "Puma", "Reebok", "Under Armour"];
   const scrollContainerRef = useRef(null);
+  const exploreRef = useRef(null);
+
+  const fetchProducts = async () => {
+    const response = await getAllProducts();
+    if (response) {
+      setProducts(response);
+    }
+    else { setProducts([]); }
+  }
 
   const scrollNext = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({
-        left: 250, // Cuộn sang phải 250px (bằng chiều rộng của ProductCard)
+        left: 500, // Cuộn sang phải 250px (bằng chiều rộng của ProductCard)
         behavior: "smooth",
       });
     }
@@ -27,13 +42,28 @@ export default function Page() {
   const scrollPrevious = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({
-        left: -250, // Cuộn sang trái 250px
+        left: -500, // Cuộn sang trái 250px
         behavior: "smooth",
       });
     }
   };
+
+  const handleScrollToExplore = () => {
+    if (exploreRef.current) {
+      exploreRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchProducts();
+    }
+    fetchData();
+  }, []);
+
+
   return (
-    <div>
+    <div className="max-w-[1800px] mx-auto">
       <div className="flex justify-center ">
         <div className="mr-10">
           <div className="py-3 border-t border-dashed border-gray-300">
@@ -124,20 +154,26 @@ export default function Page() {
           </div>
         </div>
         <div ref={scrollContainerRef} className="flex gap-5 my-10 overflow-x-auto w-full mx-auto scroll-snap-x snap-mandatory hide-scrollbar" >
-          <ProductCard product={{ id: "pro001", name: "Product 1", image: "/images/product1.png", price: 166, rating: 4, discount: 40 }} className="min-w-[250px] flex-shrink-0" />
-          <ProductCard product={{ id: "pro002", name: "Product 2", image: "/images/product1.png", price: 200, rating: 5, discount: 30 }} className="min-w-[250px] flex-shrink-0" />
-          <ProductCard product={{ id: "pro003", name: "Product 3", image: "/images/product1.png", price: 120, rating: 3, discount: 20 }} className="min-w-[250px] flex-shrink-0" />
-          <ProductCard product={{ id: "pro004", name: "Product 4", image: "/images/product1.png", price: 180, rating: 4, discount: 50 }} className="min-w-[250px] flex-shrink-0" />
-          <ProductCard product={{ id: "pro005", name: "Product 5", image: "/images/product1.png", price: 150, rating: 4, discount: 10 }} className="min-w-[250px] flex-shrink-0" />
-          <ProductCard product={{ id: "pro005", name: "Product 5", image: "/images/product1.png", price: 150, rating: 4, discount: 10 }} className="min-w-[250px] flex-shrink-0" />
-          <ProductCard product={{ id: "pro005", name: "Product 5", image: "/images/product1.png", price: 150, rating: 4, discount: 10 }} className="min-w-[250px] flex-shrink-0" />
+          {flashSaleProducts.map((product) => (
+            <ProductCard key={product.id} product={product} className="min-w-[250px] flex-shrink-0" />
+          ))}
         </div>
-        <button className="px-10 py-3 mx-auto flex mb-5 bg-[#ff8200] rounded-md text-white">View All Products</button>
+        <button className="px-10 py-3 mx-auto flex mb-5 bg-[#ff8200] rounded-md text-white"
+          onClick={handleScrollToExplore}>View All Products</button>
       </div>
 
       {/* ---Filter Product --- */}
-      <div>
-
+      <div className="mx-20 mb-5 border-b border-gray-300 mt-10">
+        <div className="flex justify-between w-full items-center mb-5">
+          <p className="text-3xl font-bold mr-20">Filtered Products</p>
+          <button className=" px-10 py-3 bg-[#ff8200] rounded-md text-white"
+            onClick={handleScrollToExplore}>View All</button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 my-10 w-full h-auto mx-auto justify-items-center" >
+          {filteredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} className="min-w-[250px] flex-shrink-0" />
+          ))}
+        </div>
       </div>
 
       {/* --- Category --- */}
@@ -189,13 +225,13 @@ export default function Page() {
         </div>
         <div className="flex justify-between w-full items-center mb-5">
           <p className="text-3xl font-bold mr-20">Best Selling Products</p>
-          <button className=" px-10 py-3 bg-[#ff8200] rounded-md text-white">View All</button>
+          <button className=" px-10 py-3 bg-[#ff8200] rounded-md text-white"
+            onClick={handleScrollToExplore}>View All</button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 my-10 w-full h-auto mx-auto justify-items-center" >
-          <ProductCard product={{ id: "pro001", name: "Product 1", image: "/images/product1.png", price: 166, rating: 4, discount: 40 }} className="min-w-[250px] flex-shrink-0" />
-          <ProductCard product={{ id: "pro002", name: "Product 2", image: "/images/product1.png", price: 200, rating: 5, discount: 30 }} className="min-w-[250px] flex-shrink-0" />
-          <ProductCard product={{ id: "pro003", name: "Product 3", image: "/images/product1.png", price: 120, rating: 3, discount: 20 }} className="min-w-[250px] flex-shrink-0" />
-          <ProductCard product={{ id: "pro004", name: "Product 4", image: "/images/product1.png", price: 180, rating: 4, discount: 50 }} className="min-w-[250px] flex-shrink-0" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 my-10 w-full h-auto mx-auto justify-items-center" >
+          {bestSellingProducts.map((product) => (
+            <ProductCard key={product.id} product={product} className="min-w-[250px] flex-shrink-0" />
+          ))}
         </div>
       </div>
 
@@ -205,7 +241,7 @@ export default function Page() {
       </div>
 
       {/* --- Our Products --- */}
-      <div className="mx-20 mb-5 border-b border-gray-300">
+      <div ref={exploreRef} className="mx-20 mb-5 border-b border-gray-300">
         <div className="flex items-center py-5">
           <div className="bg-[#FF8200] w-5 h-10 rounded-sm"></div>
           <div className="text-[#ff8200] ml-5 font-[600] text-xl">Our Products</div>
@@ -214,11 +250,9 @@ export default function Page() {
           <p className="text-3xl font-bold mr-20">Explore Our Products</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 my-10 w-full h-auto mx-auto justify-items-center" >
-          <ProductCard product={{ id: "pro001", name: "Product 1", image: "/images/product1.png", price: 166, rating: 4, discount: 40 }} />
-          <ProductCard product={{ id: "pro002", name: "Product 2", image: "/images/product1.png", price: 200, rating: 5, discount: 30 }} />
-          <ProductCard product={{ id: "pro003", name: "Product 3", image: "/images/product1.png", price: 120, rating: 3, discount: 20 }} />
-          <ProductCard product={{ id: "pro004", name: "Product 4", image: "/images/product1.png", price: 180, rating: 4, discount: 50 }} />
-          <ProductCard product={{ id: "pro005", name: "Product 5", image: "/images/product1.png", price: 150, rating: 4, discount: 10 }} />
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} className="min-w-[250px] flex-shrink-0" />
+          ))}
         </div>
       </div>
 

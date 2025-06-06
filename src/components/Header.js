@@ -92,7 +92,7 @@ const Header = () => {
                         {
                             user ? (<div className="flex items-center gap-2"
                                 onClick={visibleMennu}>
-                                <Image src={user && user.avatar ? getAvatarLink(user.avatar) : "/images/noavatar.png"} alt="account" height={25} width={25} />
+                                <Image src={user && user.avatar ? getAvatarLink(user.avatar) : "/images/noavatar.png"} alt="account" height={40} width={40} className="rounded-full"/>
                                 <a id="account" href="/account">{user.username}</a>
                             </div>) : (<div className="flex items-center gap-2">
                                 <Image src="/icons/accountic.png" alt="account" height={25} width={25} />

@@ -1,16 +1,72 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import CartItem from '@/components/CartItem';
+import { getCart, deleteCartm } from '@/api/cartApi';
+import { getAllProducts } from '@/api/productApi';
 
 export default function Cart() {
-    const subtotal = 0; // calculate subtotal from items in cart
-    const shipping = 0; // calculate shipping from items in cart
+    const [subtotal, setSubtotal] = useState(0);
+    const shipping = 0;
     const [isAllChecked, setIsAllChecked] = useState(false); // Trạng thái checkbox của thead
-    const [items, setItems] = useState([
-        { id: "1", product: "Product 1", image: "/images/product1.png", discount: 5, price: 50, stockStatus: true, quantity: 1, isChecked: false },
-        { id: "2", product: "Product 2", image: "/images/product1.png", discount: 10, price: 100, stockStatus: true, quantity: 2, isChecked: false },
-    ]);
+    const [products, setProducts] = useState([]); // Danh sách sản phẩm
+    const [items, setItems] = useState([]);
+
+    const fetchCartItems = async (productsList) => {
+        const cartItems = await getCart();
+        if (cartItems) {
+            setItems(cartItems.map(item => {
+                // Tìm product theo id từ mảng productsList
+                const productInfo = productsList.find(p => p.id === item.productId || (item.product && p.id === item.product.id));
+                return {
+                    ...item,
+                    isChecked: false,
+                    subtotal: item.quantity * (productInfo ? productInfo.price : item.product.price),
+                    product: {
+                        ...(productInfo || item.product),
+                        imageUrl: (productInfo && productInfo.imageUrl) || (item.product && item.product.imageUrl) || "/images/placeholder.png"
+                    }
+                }
+            }));
+        }
+    };
+
+    const handleQuantityChange = (itemId, newQuantity) => {
+        setItems(prevItems =>
+            prevItems.map(item =>
+                item.id === itemId ? { ...item, quantity: newQuantity } : item
+            )
+        );
+        fetchData(); // Cập nhật lại dữ liệu sau khi thay đổi số lượng
+    };
+
+    const deleteCartItem = async (id) => {
+        const response = await deleteCart(id);
+        if (response) {
+            alert('Delete cart item successfully');
+            setItems(items.filter(item => item.id !== id));
+            if (items.length === 1) {
+                setIsAllChecked(false);
+            }
+        }
+    }
+
+    const handleDeleteAllCartItems = async () => {
+        const deletePromises = items.map(item => deleteCartItem(item.id));
+        await Promise.all(deletePromises);
+        setItems([]);
+    }
+    // const fetchProducts = async () => {
+    //     const response = await getAllProducts();
+    //     setProducts(response || []);
+    // };
+
+    const fetchData = async () => {
+        const productsList = await getAllProducts();
+        setProducts(productsList || []);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await fetchCartItems(productsList || []);
+    };
 
     // Hàm xử lý khi checkbox trong thead được chọn
     const handleSelectAll = () => {
@@ -31,8 +87,18 @@ export default function Cart() {
         setIsAllChecked(allChecked);
     };
 
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        const checkedItems = items.filter(item => item.isChecked);
+        const total = checkedItems.reduce((acc, item) => acc + item.subtotal, 0);
+        setSubtotal(total);
+    }, [items]);
+
     return (
-        <div>
+        <div className='max-w-[1800px] mx-auto'>
             <div id="roadmap" className="flex items-center mt-10 ml-15">
                 <a className="text-gray-500" href="/">Home</a>
                 <label className="ml-3 mr-3">/</label>
@@ -56,7 +122,7 @@ export default function Cart() {
                             <th className='font-medium'>Quantity</th>
                             <th className='font-medium'>Subtotal</th>
                             <th className='flex justify-center items-center h-full my-5'>
-                                <Image src={"/icons/deleteic.png"} alt="delete" width={25} height={25} className="" />
+                                <Image src={"/icons/deleteic.png"} alt="delete" width={25} height={25} className="" onClick={handleDeleteAllCartItems} />
                             </th>
                         </tr>
                     </thead>
@@ -66,6 +132,8 @@ export default function Cart() {
                                 key={item.id}
                                 item={item}
                                 onCheck={() => handleItemCheck(item.id)}
+                                onDelete={() => deleteCartItem(item.id)}
+                                onQuantityChange={handleQuantityChange}
                             />
                         ))}
                     </tbody>
@@ -96,7 +164,15 @@ export default function Cart() {
                             <p className='text-right'>${subtotal + shipping}</p>
                         </div>
                         <button className='bg-[#FF8200] text-white rounded-xs px-10 py-3 mt-5 w-fit mx-auto'
-                            onClick={() => window.location.href = "/checkout"}>Process To Check Out</button>
+                            onClick={() => {
+                                const checkedItems = items.filter(item => item.isChecked);
+                                if (checkedItems.length === 0) {
+                                    alert("Please select at least one item to checkout!");
+                                    return;
+                                }
+                                localStorage.setItem('checkout_items', JSON.stringify(checkedItems));
+                                window.location.href = "/checkout";
+                            }}>Process To Check Out</button>
                     </div>
                 </div>
             </div>

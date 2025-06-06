@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { ProductCard } from '@/components/ProductCard';
 import { useSearchParams } from 'next/navigation';
 import { getAllProducts } from '@/api/productApi';
+import { getAllCategories } from '@/api/categoryApi';
 
 export default function ProductByCategoryPage() {
     const searchParams = useSearchParams();
@@ -13,25 +14,33 @@ export default function ProductByCategoryPage() {
     useEffect(() => {
         const fetchProducts = async () => {
             const response = await getAllProducts();
-            const filtered = response.filter(product => {
-                if (product.category && typeof product.category === "object" && product.category.id) {
-                    return String(product.category.id) === String(categoryID);
-                }
-                return String(product.category) === String(categoryID);
-            });
-            setProducts(filtered);
-
-            if (filtered.length > 0) {
-                if (filtered[0].category && typeof filtered[0].category === "object" && filtered[0].category.name) {
-                    setCategory(filtered[0].category.name);
-                } else {
-                    setCategory(filtered[0].category);
-                }
-            } else {
-                setCategory(categoryID);
+            console.log(response);
+            if (response) {
+                const filtered = response.filter(product => {
+                    if (product.category && typeof product.category === "object" && product.category.id) {
+                        return String(product.category.id) === String(categoryID);
+                    }
+                    return String(product.category) === String(categoryID);
+                });
+                setProducts(filtered);
             }
         };
-        fetchProducts();
+        const fetchCategory = async () => {
+            const response = await getAllCategories();
+            const categories = response?.data?.content || response?.data || response;
+            if (Array.isArray(categories)) {
+                const found = categories.find(cat => String(cat.id) === String(categoryID));
+                setCategory(found ? found.name : '');
+            } else {
+                setCategory('');
+            }
+        }
+        const fetchData = async () => {
+            await fetchProducts();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await fetchCategory();
+        }
+        fetchData();
     }, [categoryID]);
 
 

@@ -1,6 +1,6 @@
 import { Poppins, Montserrat } from "next/font/google";
 import "../styles/globals.css";
-import { ToastBar, Toaster } from "react-hot-toast";
+import {  Toaster } from "react-hot-toast";
 
 // Cấu hình phông chữ Poppins
 const poppins = Poppins({

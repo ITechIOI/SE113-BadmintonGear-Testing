@@ -1,22 +1,28 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { use, useEffect, useState } from 'react'
 import Image from 'next/image';
 import { ProductCard } from '@/components/ProductCard';
 import { useSearchParams } from 'next/navigation';
-import { ReviewItem } from '@/components/ReviewItem';
+import ReviewItem from '@/components/ReviewItem';
 import { getProductById } from '@/api/productApi';
 import { getReviews } from '@/api/reviewApi';
+import { getLinkImage } from '@/api/splitService';
+import { getAllUsers } from '@/api/userApi';
+import { addToCart } from '@/api/cartApi';
 
 export default function ProductPage() {
     const searchParams = useSearchParams();
     const idProduct = searchParams.get('id');
-    const [descriptionVisible, setDescriptionVisible] = useState(true); // State to control the visibility of the description
-    // const [additionalInfoVisible, setAdditionalInfoVisible] = useState(false); // State to control the visibility of the additional information
-    const [reviewsVisible, setReviewsVisible] = useState(false); // State to control the visibility of the reviews
+    const [ratings, setRatings] = useState(0);
+    const [ratingCount, setRatingCount] = useState(0);
+    const [descriptionVisible, setDescriptionVisible] = useState(true);
+    const [reviewsVisible, setReviewsVisible] = useState(false);
     const [count, setCount] = useState(1);
     const [reviews, setReviews] = useState([]);
-    const [product, setProduct] = useState({}); 
-    const currentPrice = product.price; // Tính giá hiện tại của sản phẩm
+    const [reviewsWithUser, setReviewsWithUser] = useState([]);
+    const [product, setProduct] = useState({});
+    const [users, setUsers] = useState([]);
+    const currentPrice = product.price;
     const fetchProductById = async (id) => {
         const response = await getProductById(id);
         if (response) {
@@ -33,7 +39,49 @@ export default function ProductPage() {
             console.error("Failed to fetch reviews for product");
         }
     }
+    const fetchUsers = async () => {
+        const response = await getAllUsers();
+        if (response) {
+            console.log("Users fetched successfully:", response);
+            setUsers(response);
+        } else {
+            console.error("Failed to fetch users");
+        }
+    }
 
+    const handleAddToCart = async (e) => {
+        const id = JSON.parse(localStorage.getItem('user_profile')).id;
+        const data = {
+            quantity: count,
+            productId: product.id,
+            userId: id
+        }
+        await addToCart(data);
+    }
+
+    useEffect(() => {
+        if (Array.isArray(reviews) && reviews.length > 0 && Array.isArray(users) && users.length > 0) {
+            const mapped = reviews.map(review => ({
+                ...review,
+                user: users.find(u => String(u.id) === String(review.userId)) || null
+            }));
+            console.log("mapped reviewsWithUser", mapped);
+            setReviewsWithUser(mapped);
+        } else {
+            setReviewsWithUser([]);
+        }
+    }, [reviews, users]);
+
+    useEffect(() => {
+        if (reviews.length > 0) {
+            const totalRatings = reviews.reduce((acc, review) => acc + review.rating, 0);
+            setRatings(Math.round(totalRatings / reviews.length));
+            setRatingCount(reviews.length);
+        } else {
+            setRatings(0);
+            setRatingCount(0);
+        }
+    }, [reviews]);
 
     const handleDescriptionClick = () => {
         setDescriptionVisible(true);
@@ -47,6 +95,7 @@ export default function ProductPage() {
     useEffect(() => {
         const fetchData = async () => {
             if (idProduct) {
+                await fetchUsers();
                 await fetchProductById(idProduct);
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 await fetchReviewsByProductId(idProduct);
@@ -60,45 +109,39 @@ export default function ProductPage() {
             <div id="roadmap" className="flex items-center mt-10 ml-15">
                 <a className="text-gray-500" href="/">Home</a>
                 <label className="ml-3 mr-3">/</label>
-                <a className="text-gray-500" href="/category?rackets">{product.category}</a>
+                <a className="text-gray-500" href={product && product.category ? `/category?id=${product.category.id}` : "/category?id=1"}>{product.category ? product.category.name : ""}</a>
                 <label className="ml-3 mr-3">/</label>
-                <a className="text-black" href={`/product/${product.id}`}>{product.name}</a>
+                <a className="text-black" href={`/product/${product.id}`}>{product.name || ""}</a>
             </div>
-            <div className='mx-30 mt-10'>
-                <div className='h-fit flex gap-10 border-b border-gray-500 pb-5'>
+            <div className='mx-auto mt-10'>
+                <div className='h-fit flex gap-10 border-b border-gray-500 pb-5 justify-center'>
                     <div className='flex items-center'>
-                        <div className='flex flex-col gap-5'>
-                            <Image src="/images/product1.png" alt="Product Image" width={110} height={100} className="object-contain" />
-                            <Image src="/images/product1.png" alt="Product Image" width={110} height={100} className="object-contain" />
-                            <Image src="/images/product1.png" alt="Product Image" width={110} height={100} className="object-contain" />
-                            <Image src="/images/product1.png" alt="Product Image" width={110} height={100} className="object-contain" />
-                        </div>
-                        <div className='ml-10 h-full'>
-                            <Image src="/images/product1.png" alt="Product Image" width={500} height={500} className="object-contain h-full" />
+                        <div className='h-full'>
+                            <Image src={product && product.imageUrl ? getLinkImage(product.imageUrl) : "/images/placeholder.png"} alt="Product Image" width={500} height={500} className="object-contain h-full" />
                         </div>
                     </div>
                     <div>
                         <div className='w-full flex flex-col gap-5 border-b border-gray-500 pb-5 h-fit'>
-                            <p>{product.name}</p>
+                            <p className='text-2xl font-bold'>{product.name || ""}</p>
                             <div className='flex items-center mt-2 text-xl gap-2'>
                                 <div className='flex items-center text-xl'>
                                     {Array.from({ length: 5 }, (_, index) => (
-                                        <span key={index} className={index < product.rating ? 'text-[#FFAD33]' : 'text-gray-300'}>
+                                        <span key={index} className={index < ratings ? 'text-[#FFAD33]' : 'text-gray-300'}>
                                             ★
                                         </span>
                                     ))}
-                                    <div className='text-black opacity-50 ml-4'>(150 reviews)</div>
+                                    <div className='text-black opacity-50 ml-4'>({ratingCount} reviews)</div>
                                 </div>
                                 <div className='text-xl'>|</div>
-                                <div className={product.stockState ? "text-[#34A853] text-md" : "text-md text-[#EA4335]"}>{product.stockState ? "In Stock" : "Out Of Stock"}</div>
+                                <div className={product.quantity > 0 ? "text-[#34A853] text-md" : "text-md text-[#EA4335]"}>{product.quantity > 0 ? "In Stock" : "Out Of Stock"}</div>
                             </div>
                             <div className='flex items-center mt-2'>
-                                <p className='text-3xl font-semibold '>${currentPrice}</p>
+                                <p className='text-3xl font-semibold '>{Number(currentPrice).toLocaleString()} VND</p>
                                 {product.discount > 0 && <p className='ml-5 text-black opacity-50 text-lg line-through'>${product.price}</p>}
                             </div>
-                            <p>{product.description}</p>
+                            <p>{product.description || ""}</p>
                         </div>
-                        <div className='flex justify-between items-center mt-5'>
+                        <div className='flex gap-5 items-center mt-5'>
                             <div className="flex items-center border border-gray-400 rounded w-fit">
                                 <button
                                     className="px-4 py-2 border-r border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -115,10 +158,11 @@ export default function ProductPage() {
                                     +
                                 </button>
                             </div>
-                            <button className='bg-[#FF8200] text-white rounded-xs px-7 py-3'>Buy Now</button>
-                            <div className='border rounded-xs p-2'>
+                            <button className='bg-white text-[#FF8200] border border-[#FF8200] rounded-xs px-4 py-2' onClick={handleAddToCart}>Add To Cart</button>
+                            <button className='bg-[#FF8200] text-white rounded-xs px-4 py-2'>Buy Now</button>
+                            {/* <div className='border rounded-xs p-2'>
                                 <Image src="/icons/blwishlistic.png" alt="wish" width={30} height={30} className="object-contain" />
-                            </div>
+                            </div> */}
                         </div>
                         <div className='w-full border rounded-xs mt-5'>
                             <div className='flex gap-2 py-3 w-full pl-1 border-b'>
@@ -137,7 +181,6 @@ export default function ProductPage() {
                             </div>
                         </div>
                     </div>
-
                 </div>
                 <div className='h-fit  border-b border-gray-500 pb-5'>
                     <div className='flex items-center justify-center mx-40 gap-20 text-lg'>
@@ -149,20 +192,23 @@ export default function ProductPage() {
                     {descriptionVisible && (
                         <div className='w-full mx-20 my-5 flex flex-col gap-5 items-center'>
                             <p className='w-full'>{product.description}</p>
-                            <Image src="/images/product1.png" alt="Product Image" width={500} height={500} className="object-contain h-full" />
+                            <Image src={product && product.imageUrl ? getLinkImage(product.imageUrl) : "/images/placeholder.png"} alt="Product Image" width={500} height={500} className="object-contain h-full" />
                         </div>
                     )}
                     {reviewsVisible && (
                         <div className='w-full px-20 my-5 flex flex-col gap-5 items-center'>
                             <p className='w-full text-lg font-semibold'>Reviews</p>
                             {
-                                product.reviews.map((review) => (
+                                reviewsWithUser.map((review) => (
                                     <ReviewItem key={review.id} review={review} />
                                 ))}
+                            {reviewsWithUser.length === 0 && (
+                                <p className='text-gray-500'>No reviews available for this product.</p>
+                            )}
                         </div>
                     )}
                 </div>
-                <div className="mx-20 mb-5 border-b border-gray-300">
+                {/* <div className="mx-20 mb-5 border-b border-gray-300">
                     <div className="flex items-center py-5">
                         <div className="bg-[#FF8200] w-5 h-10 rounded-sm"></div>
                         <div className="text-[#ff8200] ml-5 font-[600] text-xl">Related Item</div>
@@ -174,7 +220,7 @@ export default function ProductPage() {
                         <ProductCard product={{ id: "pro004", name: "Product 4", image: "/images/product1.png", price: 180, rating: 4, discount: 50 }} />
                         <ProductCard product={{ id: "pro005", name: "Product 5", image: "/images/product1.png", price: 150, rating: 4, discount: 10 }} />
                     </div>
-                </div>
+                </div> */}
             </div>
 
         </div>

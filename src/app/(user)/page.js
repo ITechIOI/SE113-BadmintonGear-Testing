@@ -22,6 +22,8 @@ export default function Page() {
   const scrollContainerRef = useRef(null);
   const exploreRef = useRef(null);
 
+  
+
   const fetchProducts = async () => {
     const response = await getAllProducts();
     if (response) {

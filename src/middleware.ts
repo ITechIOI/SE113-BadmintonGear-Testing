@@ -5,6 +5,14 @@ export function middleware(request) {
     const role = request.cookies.get("role")?.value;
     const token = request.cookies.get("access_token")?.value;
 
+    if (
+        !token &&
+        pathname !== "/login" &&
+        pathname !== "/register"
+    ) {
+        return NextResponse.redirect(new URL("/login", request.url));
+    }
+
     // 1. Chỉ admin mới vào được /admin
     if (pathname.startsWith("/admin") && role !== "admin" && token) {
         return NextResponse.redirect(new URL("/", request.url));

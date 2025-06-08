@@ -164,6 +164,11 @@ export default function Cart() {
                         ))}
                     </tbody>
                 </table>
+                {items.length === 0 && (
+                    <div className='flex flex-col items-center justify-center mt-10'>
+                        <Image src="/images/emptycart.png" alt="Empty Cart" width={200} height={200} />
+                        <p className='text-gray-500 mt-5'>Your cart is empty</p>
+                    </div>)}
                 <button
                     onClick={() => window.location.href = "/"}
                     className="mt-5 text-gray-500 border border-gray-500 rounded-xs px-10 py-3 hover:bg-[#FF8200] hover:text-white transition-all duration-300 ease-in-out"

@@ -1,5 +1,6 @@
 import { Poppins, Montserrat } from "next/font/google";
 import "../styles/globals.css";
+import { ToastBar, Toaster } from "react-hot-toast";
 
 // Cấu hình phông chữ Poppins
 const poppins = Poppins({
@@ -31,6 +32,7 @@ export default function RootLayout({ children }) {
         <html lang="en" className={`${poppins.variable} ${montserrat.variable}`}>
             <body className="antialiased ">
                 {children}
+                <Toaster position="top-right" />
             </body>
         </html>
     );

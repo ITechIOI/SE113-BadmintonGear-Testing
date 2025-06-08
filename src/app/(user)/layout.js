@@ -32,7 +32,7 @@ export default function UserLayout({ children }) {
     <>
       <div className={`${poppins.variable} ${montserrat.variable}`}>
         <Header />
-        <div className="mt-10 mb-10">
+        <div className="mt-10 mb-10 pt-10">
           {children}
         </div>
         <Footer />

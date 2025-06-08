@@ -40,7 +40,7 @@ export default function AdminHeader() {
         }
     }, []);
     return (
-        <div className='flex items-center justify-end w-full h-fit py-2 gap-5 px-10 bg-white'>
+        <div className='flex items-center justify-end w-full h-fit py-2 gap-5 px-10 bg-white fixed top-0 left-0 z-50'>
             <div className='flex items-center gap-5 border-r border-gray-200 px-5'>
                 <div className={`flex items-center gap-2 rounded-md ${searchVisible ? "bg-[#f5f5f5]" : "bg-white"}`}>
                     <input

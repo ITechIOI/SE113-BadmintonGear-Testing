@@ -187,32 +187,32 @@ export default function Page() {
         <p className="text-3xl font-bold mr-20">Browse By Category</p>
         <div className=" flex flex-wrap h-auto mx-auto justify-between my-10 " >
           <div className="border flex flex-col items-center justify-center px-14 mr-5 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
-            onClick={() => window.location.href = "/category?rackets"}>
+            onClick={() => window.location.href = "/category?id=1"}>
             <Image src={"/icons/racketic.png"} alt="racket" width={100} height={100} className="mb-5" />
             <p>Rackets</p>
           </div>
           <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
-            onClick={() => window.location.href = "/category?shuttlecock"}>
+            onClick={() => window.location.href = "/category?id=2"}>
             <Image src={"/icons/shuttlecockic.png"} alt="shuttlecock" width={80} height={80} className="mb-5" />
             <p>Shuttlecock</p>
           </div>
           <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
-            onClick={() => window.location.href = "/category?shoes"}>
+            onClick={() => window.location.href = "/category?id=3"}>
             <Image src={"/icons/shoesic.png"} alt="shoes" width={80} height={80} className="mb-5" />
             <p>Shoes</p>
           </div>
           <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
-            onClick={() => window.location.href = "/category?clothes"}>
+            onClick={() => window.location.href = "/category?id=4"}>
             <Image src={"/icons/clotheic.png"} alt="clothes" width={80} height={80} className="mb-5" />
             <p>Clothes</p>
           </div>
           <div className="border flex flex-col items-center justify-center mr-5 px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
-            onClick={() => window.location.href = "/category?bags"}>
+            onClick={() => window.location.href = "/category?id=5"}>
             <Image src={"/icons/bagic.png"} alt="bags" width={80} height={80} className="mb-5" />
             <p>Bags</p>
           </div>
           <div className="border flex flex-col items-center justify-center px-15 py-10 h-auto rounded-md hover:shadow-lg cursor-pointer"
-            onClick={() => window.location.href = "/category?others"}>
+            onClick={() => window.location.href = "/category?id=6"}>
             <Image src={"/icons/otheric.png"} alt="others" width={80} height={80} className="mb-5" />
             <p>Others</p>
           </div>

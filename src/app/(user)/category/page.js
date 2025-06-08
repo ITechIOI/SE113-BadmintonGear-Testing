@@ -36,9 +36,9 @@ export default function ProductByCategoryPage() {
             }
         }
         const fetchData = async () => {
-            await fetchProducts();
-            await new Promise(resolve => setTimeout(resolve, 500));
             await fetchCategory();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await fetchProducts();
         }
         fetchData();
     }, [categoryID]);
@@ -59,6 +59,11 @@ export default function ProductByCategoryPage() {
                         ))}
                     </div>
                 </div>
+                {products.length === 0 && (
+                    <div className='text-center text-gray-500 mt-10'>
+                        No products found in this category.
+                    </div>
+                )}
             </div>
         </div>
     )

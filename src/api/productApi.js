@@ -153,4 +153,27 @@ const deleteImage = async (deleteData) => {
     }
 }
 
-export { getAllProducts, getProductById, deleteProductById, addProduct, updateProduct, uploadImage, deleteImage };
+const getProductByImage = async (formData) => {
+    try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/recommend/predict/score`;
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        });
+        if (!response.ok) {
+            console.log('Failed to fetch product by image');
+            return [];
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching product by image:', error);
+        return [];
+    }
+}
+
+export { getAllProducts, getProductById, deleteProductById, addProduct, updateProduct, uploadImage, deleteImage, getProductByImage };

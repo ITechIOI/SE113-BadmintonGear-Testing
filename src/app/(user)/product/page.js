@@ -1,49 +1,62 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image';
 import { ProductCard } from '@/components/ProductCard';
-import ReviewItem from '@/components/ReviewItem';
+import { useSearchParams } from 'next/navigation';
+import { ReviewItem } from '@/components/ReviewItem';
+import { getProductById } from '@/api/productApi';
+import { getReviews } from '@/api/reviewApi';
 
 export default function ProductPage() {
+    const searchParams = useSearchParams();
+    const idProduct = searchParams.get('id');
     const [descriptionVisible, setDescriptionVisible] = useState(true); // State to control the visibility of the description
-    const [additionalInfoVisible, setAdditionalInfoVisible] = useState(false); // State to control the visibility of the additional information
+    // const [additionalInfoVisible, setAdditionalInfoVisible] = useState(false); // State to control the visibility of the additional information
     const [reviewsVisible, setReviewsVisible] = useState(false); // State to control the visibility of the reviews
     const [count, setCount] = useState(1);
-    const [product, setProduct] = useState({
-        id: "1",
-        name: "Product 1",
-        rating: 4, price: 100,
-        description: "This is product 1",
-        discount: 5, category: "Rackets",
-        stockState: true,
-        additionaInfo: "This is additional information about product 1",
-        reviews: [{ id: 1, username: "User 1", rating: 4, comment: "Great product!", date: "2023-10-01" },
-        { id: 2, username: "User 2", rating: 5, comment: "Excellent!", date: "2023-10-02" },
-        { id: 3, username: "User 3", rating: 3, comment: "Good value for money.", date: "2023-10-03" },],
-        image: "/images/product1.png"
-    }); // Khởi tạo state cho sản phẩm
-    const currentPrice = product.price - (product.price * product.discount / 100); // Tính giá hiện tại của sản phẩm
+    const [reviews, setReviews] = useState([]);
+    const [product, setProduct] = useState({}); 
+    const currentPrice = product.price; // Tính giá hiện tại của sản phẩm
+    const fetchProductById = async (id) => {
+        const response = await getProductById(id);
+        if (response) {
+            setProduct(response);
+        } else {
+            console.error("Failed to fetch product by ID");
+        }
+    }
+    const fetchReviewsByProductId = async (id) => {
+        const response = await getReviews(id);
+        if (response) {
+            setReviews(response);
+        } else {
+            console.error("Failed to fetch reviews for product");
+        }
+    }
+
 
     const handleDescriptionClick = () => {
         setDescriptionVisible(true);
-        setAdditionalInfoVisible(false);
-        setReviewsVisible(false);
-    }
-
-    const handleAdditionalInfoClick = () => {
-        setDescriptionVisible(false);
-        setAdditionalInfoVisible(true);
         setReviewsVisible(false);
     }
 
     const handleReviewsClick = () => {
         setDescriptionVisible(false);
-        setAdditionalInfoVisible(false);
         setReviewsVisible(true);
     }
+    useEffect(() => {
+        const fetchData = async () => {
+            if (idProduct) {
+                await fetchProductById(idProduct);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await fetchReviewsByProductId(idProduct);
+            }
+        }
+        fetchData();
+    }, [idProduct]);
 
     return (
-        <div>
+        <div className='max-w-[1800px] mx-auto'>
             <div id="roadmap" className="flex items-center mt-10 ml-15">
                 <a className="text-gray-500" href="/">Home</a>
                 <label className="ml-3 mr-3">/</label>
@@ -53,7 +66,7 @@ export default function ProductPage() {
             </div>
             <div className='mx-30 mt-10'>
                 <div className='h-fit flex gap-10 border-b border-gray-500 pb-5'>
-                    <div className='flex items-start'>
+                    <div className='flex items-center'>
                         <div className='flex flex-col gap-5'>
                             <Image src="/images/product1.png" alt="Product Image" width={110} height={100} className="object-contain" />
                             <Image src="/images/product1.png" alt="Product Image" width={110} height={100} className="object-contain" />
@@ -122,7 +135,6 @@ export default function ProductPage() {
                                     <p className='text-xs'>Free 30 Days Delivery Returns. <span className='underline'>Details</span></p>
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
@@ -131,8 +143,6 @@ export default function ProductPage() {
                     <div className='flex items-center justify-center mx-40 gap-20 text-lg'>
                         <p className={descriptionVisible ? "font-semibold" : ""}
                             onClick={handleDescriptionClick}>Description</p>
-                        <p className={additionalInfoVisible ? "font-semibold" : ""}
-                            onClick={handleAdditionalInfoClick}>Additional Information</p>
                         <p className={reviewsVisible ? "font-semibold" : ""}
                             onClick={handleReviewsClick}>Reviews</p>
                     </div>
@@ -140,11 +150,6 @@ export default function ProductPage() {
                         <div className='w-full mx-20 my-5 flex flex-col gap-5 items-center'>
                             <p className='w-full'>{product.description}</p>
                             <Image src="/images/product1.png" alt="Product Image" width={500} height={500} className="object-contain h-full" />
-                        </div>
-                    )}
-                    {additionalInfoVisible && (
-                        <div className='w-full mx-20 my-5 flex flex-col gap-5 items-center'>
-                            <p className='w-full'>{product.additionaInfo}</p>
                         </div>
                     )}
                     {reviewsVisible && (

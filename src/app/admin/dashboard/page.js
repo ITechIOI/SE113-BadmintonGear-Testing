@@ -7,13 +7,13 @@ import AdminOrderItem from '@/components/AdminOrderItem';
 
 export default function DashboardPage() {
     const [selectedOption, setSelectedOption] = useState('all-times');
-    const totalRevenue = 0;
+    const totalRevenue = 900000;
     const revenueRatio = 15;
-    const totalSales = 0;
+    const totalSales = 1000000;
     const salesRatio = 20;
-    const productSKU = 0;
-    const productSKURatio = -10;
-    const balance = 0;
+    // const productSKU = 5;
+    // const productSKURatio = -10;
+    const balance = 500000;
     const balanceRatio = 0;
     const [isAllChecked, setIsAllChecked] = useState(false); // Trạng thái checkbox của thead
 
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                     <div className='flex flex-col mt-5 gap-2'>
                         <label className='text-[#667085]'>Total Revenue</label>
                         <div className='flex items-center gap-2'>
-                            <label className='text-2xl font-semibold'>${totalRevenue}</label>
+                            <label className='text-2xl font-semibold'>{Number(totalRevenue).toLocaleString()} VND</label>
                             <div className={`py-1 px-2 rounded-2xl ${revenueRatio > 0 ? "bg-[#E7F4EE] text-[#0D894F]"
                                 : (revenueRatio == 0 ? "bg-[#F0F1F3] text-[#667085]"
                                     : "bg-[#FEEDEC] text-[#F04438]")}`}>{revenueRatio > 0 ? "+" : ""}{revenueRatio}%</div>
@@ -226,14 +226,14 @@ export default function DashboardPage() {
                     <div className='flex flex-col mt-5 gap-2'>
                         <label className='text-[#667085]'>Total Sales</label>
                         <div className='flex items-center gap-2'>
-                            <label className='text-2xl font-semibold'>${totalSales}</label>
+                            <label className='text-2xl font-semibold'>{Number(totalSales).toLocaleString()} VND</label>
                             <div className={`py-1 px-2 rounded-2xl ${salesRatio > 0 ? "bg-[#E7F4EE] text-[#0D894F]"
                                 : (salesRatio == 0 ? "bg-[#F0F1F3] text-[#667085]"
                                     : "bg-[#FEEDEC] text-[#F04438]")}`}>{salesRatio > 0 ? "+" : ""}{salesRatio}%</div>
                         </div>
                     </div>
                 </div>
-                <div className='bg-white rounded-md shadow-md p-5 w-6/25'>
+                {/* <div className='bg-white rounded-md shadow-md p-5 w-6/25'>
                     <div className='flex justify-between items-center rounded-full bg-[#FEEDEC] p-1 w-fit'>
                         <div className='flex items-center justify-center rounded-full bg-[#FCDAD7] p-2'>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -255,7 +255,7 @@ export default function DashboardPage() {
                                     : "bg-[#FEEDEC] text-[#F04438]")}`}>{productSKURatio > 0 ? "+" : ""}{productSKURatio}%</div>
                         </div>
                     </div>
-                </div>
+                </div> */}
                 <div className='bg-white rounded-md shadow-md p-5 w-6/25'>
                     <div className='flex justify-between items-center rounded-full bg-[#FDF1E8] p-1 w-fit'>
                         <div className='flex items-center justify-center rounded-full bg-[#FAE1CF] p-2'>
@@ -269,7 +269,7 @@ export default function DashboardPage() {
                     <div className='flex flex-col mt-5 gap-2'>
                         <label className='text-[#667085]'>Balance</label>
                         <div className='flex items-center gap-2'>
-                            <label className='text-2xl font-semibold'>${balance}</label>
+                            <label className='text-2xl font-semibold'>{Number(balance).toLocaleString()} VND</label>
                             <div className={`py-1 px-2 rounded-2xl ${balanceRatio > 0 ? "bg-[#E7F4EE] text-[#0D894F]"
                                 : (balanceRatio == 0 ? "bg-[#F0F1F3] text-[#667085]"
                                     : "bg-[#FEEDEC] text-[#F04438]")}`}>{balanceRatio > 0 ? "+" : ""}{balanceRatio}%</div>

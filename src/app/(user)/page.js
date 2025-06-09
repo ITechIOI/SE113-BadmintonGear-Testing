@@ -4,7 +4,76 @@ import TimeCountdown from "@/components/TimeCountdown"
 import Image from "next/image"
 import { useState, useRef, useEffect } from "react"
 import { getAllProducts } from "@/api/productApi"
-import { getReviews } from "@/api/reviewApi"
+import toast from "react-hot-toast";
+
+const registerServiceWorker = async () => {
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") {
+    console.error("❌ Notification permission denied");
+    return;
+  }
+  if ("serviceWorker" in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+
+      // Đợi cho đến khi service worker ở trạng thái "active"
+      if (reg.installing) {
+        await new Promise((resolve) => {
+          reg.installing.addEventListener("statechange", function (e) {
+            if (e.target.state === "activated") resolve();
+          });
+        });
+      } else if (reg.waiting) {
+        await new Promise((resolve) => {
+          reg.waiting.addEventListener("statechange", function (e) {
+            if (e.target.state === "activated") resolve();
+          });
+        });
+      } else if (reg.active) {
+        // Đã active, không cần chờ
+      }
+
+      console.log("✅ Service worker registered & active!");
+      return reg;
+    } catch (err) {
+      console.error("❌ SW registration failed", err);
+    }
+  } else {
+    console.warn("⚠️ Service worker not supported.");
+  }
+};
+
+const urlBase64ToUint8Array = (base64String) => {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+};
+
+const subscribeToPush = async (registration) => {
+  const PUBLIC_VAPID_KEY = "BOJ494ZGAa4HcRV3eoaJmnRjMKx208iXeolTXCb3m8Q6lbXuYimDBHz71M_fVZuKe_ecjsm1grUmPFaw78CaDug";
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
+  });
+  const subscriptionJson = subscription.toJSON();
+  console.log("📦 Subscription:", subscription);
+  const body = {
+    endpoint: subscriptionJson.endpoint,
+    p256dh: subscriptionJson.keys.p256dh,
+    auth: subscriptionJson.keys.auth,
+  }
+  console.log("📦 Subscription body:", body);
+  await fetch("http://localhost:8222/users/subscriptions/subscript", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer "+ localStorage.getItem("access_token"),
+    },
+    body: JSON.stringify(body),
+  });
+  alert("🚀 Subscribed to push notifications!");
+};
 
 export default function Page() {
   const [products, setProducts] = useState([]);
@@ -22,12 +91,34 @@ export default function Page() {
   const scrollContainerRef = useRef(null);
   const exploreRef = useRef(null);
 
-  
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        const msg = event.data;
+        if (msg?.type === "PUSH_EVENT") {
+          const { title, body } = msg.payload;
+          toast(`${title}: ${body}`, {
+            icon: "🔔",
+            duration: 8000,
+          });
+        }
+      });
+    }
+    if (Notification.permission !== "granted") {
+      enablePush();
+    }
+  }, []);
 
   const fetchProducts = async () => {
     const response = await getAllProducts();
     if (response) {
       setProducts(response);
+      const productsWithDiscount = response.map(product => ({
+        ...product,
+        discount: product.discount ?? 10 // hoặc giá trị discount bạn muốn
+      }));
+      setFlashSaleProducts(productsWithDiscount);
+      setBestSellingProducts(productsWithDiscount);
     }
     else { setProducts([]); }
   }
@@ -62,12 +153,15 @@ export default function Page() {
     }
     fetchData();
   }, []);
-
+  const enablePush = async () => {
+    const reg = await registerServiceWorker();
+    if (reg) await subscribeToPush(reg);
+  };
 
   return (
     <div className="max-w-[1800px] mx-auto">
       <div className="flex justify-center ">
-        <div className="mr-10">
+        {/* <div className="mr-10">
           <div className="py-3 border-t border-dashed border-gray-300">
             <div className="flex">Availability</div>
             <div>
@@ -133,7 +227,7 @@ export default function Page() {
             </div>
 
           </div>
-        </div>
+        </div> */}
 
         {/* --- Discount Banner --- */}
         <div>
@@ -148,13 +242,14 @@ export default function Page() {
           <div className="text-[#ff8200] ml-5 font-[600] text-xl">Today's</div>
         </div>
         <div className="flex items-end mb-5">
-          <p className="text-3xl font-bold mr-20">Flash Sales</p>
-          <TimeCountdown targetDate={"2025-10-29T23:59:59"} />
+          <p className="text-3xl font-bold mr-20">Flash Sales </p>
+          <TimeCountdown targetDate={"2025-06-10T23:59:59"} />
           <div className="flex ml-auto">
             <Image onClick={scrollPrevious} src={"/icons/previousic.png"} alt="previous" width={25} height={25} />
             <Image onClick={scrollNext} src={"/icons/nextic.png"} alt="next" width={25} height={25} className="ml-5" />
           </div>
         </div>
+        <span className="text-2xl text-[#ff8200]">Flash Sales Summer 2025</span>
         <div ref={scrollContainerRef} className="flex gap-5 my-10 overflow-x-auto w-full mx-auto scroll-snap-x snap-mandatory hide-scrollbar" >
           {flashSaleProducts.map((product) => (
             <ProductCard key={product.id} product={product} className="min-w-[250px] flex-shrink-0" />
@@ -165,7 +260,7 @@ export default function Page() {
       </div>
 
       {/* ---Filter Product --- */}
-      <div className="mx-20 mb-5 border-b border-gray-300 mt-10">
+      {/* <div className="mx-20 mb-5 border-b border-gray-300 mt-10">
         <div className="flex justify-between w-full items-center mb-5">
           <p className="text-3xl font-bold mr-20">Filtered Products</p>
           <button className=" px-10 py-3 bg-[#ff8200] rounded-md text-white"
@@ -176,7 +271,7 @@ export default function Page() {
             <ProductCard key={product.id} product={product} className="min-w-[250px] flex-shrink-0" />
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* --- Category --- */}
       <div className="mx-20 mb-5 border-b border-gray-300">
@@ -230,7 +325,7 @@ export default function Page() {
           <button className=" px-10 py-3 bg-[#ff8200] rounded-md text-white"
             onClick={handleScrollToExplore}>View All</button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 my-10 w-full h-auto mx-auto justify-items-center" >
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 my-10 w-full h-auto mx-auto justify-items-center" >
           {bestSellingProducts.map((product) => (
             <ProductCard key={product.id} product={product} className="min-w-[250px] flex-shrink-0" />
           ))}

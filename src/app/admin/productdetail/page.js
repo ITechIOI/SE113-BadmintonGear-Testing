@@ -84,7 +84,7 @@ export default function ProductDetail() {
     const handleSaveProduct = async () => {
         let urlImage = product.imageUrl;
         if (changeImage) {
-            deleteImageFromCloud(getPublicId(product.imageUrl));
+            // deleteImageFromCloud(getPublicId(product.imageUrl));
             urlImage = "";
             if (imageFile) {
                 const uploadData = new FormData();
@@ -106,6 +106,8 @@ export default function ProductDetail() {
         const response = await updateProduct(productId, updatedData);
         if (response) {
             console.log('Response from updateProduct:', response);
+            setMode('view');
+            setProduct(response);
         }
     }
 

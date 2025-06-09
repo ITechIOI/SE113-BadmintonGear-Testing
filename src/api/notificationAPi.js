@@ -1,10 +1,11 @@
 const pushNotification = async (notification) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/notifications/send-email`;
-
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/notifications/send`;
+    const token = localStorage.getItem('access_token');
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(notification)
     });

@@ -76,7 +76,7 @@ export default function AdminOrderItem({ order, button }) {
                     <div className='text-gray-500 text-sm' >{order ? order.phone : ""}</div>
                 </div>
             </td>
-            <td className='text-gray-500 font-medium'>${order ? order.totalPrice : ""}</td>
+            <td className='text-gray-500 font-medium'>{order ? Number(order.totalPrice).toLocaleString() : ""} VND</td>
             {/* {onCheck && (<td className='text-gray-500 font-medium'>{order ? order.payment : ""}</td>)} */}
             <td className='flex justify-center items-center py-4'>
                 {order && (

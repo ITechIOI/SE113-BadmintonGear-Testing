@@ -10,7 +10,7 @@ const getAllCategories = async () => {
     });
 
     if (response.status !== 200) {
-        console.error('Failed to fetch categories:');
+        console.log('Failed to fetch categories:');
         return [];
     }
 
@@ -59,9 +59,9 @@ const updateCategory = async (id, categoryData) => {
         return null;
     }
 
-    const data = await response.data.json();
+    const data = await response.json();
     alert('Category updated successfully');
-    return data;
+    return data.data;
 }
 
 const deleteCategory = async (id) => {

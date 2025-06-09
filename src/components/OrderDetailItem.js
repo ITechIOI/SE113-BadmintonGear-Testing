@@ -37,8 +37,8 @@ export default function OrderDetailItem({ item }) {
                 </div>
             </td>
             <td className='py-4'>{item.quantity}</td>
-            <td>${item.price}</td>
-            <td>${item.quantity * item.price}</td>
+            <td>{Number(item.price).toLocaleString()} VND</td>
+            <td>{Number(item.quantity * item.price).toLocaleString()} VND</td>
         </tr>
     )
 }

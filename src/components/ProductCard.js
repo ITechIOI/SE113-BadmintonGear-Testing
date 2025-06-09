@@ -18,8 +18,8 @@ export const ProductCard = ({ product }) => {
         await addToCart(data);
     }
 
-    const currentPrice = product.price;
-    // const currentPrice = product.price - (product.price * product.discount / 100);
+    // const currentPrice = product.price;
+    const currentPrice = product.price - (product.price * (product.discount || 0) / 100);
 
     const handleMouseEnter = () => {
         setShowAddToCart(true);
@@ -52,7 +52,7 @@ export const ProductCard = ({ product }) => {
             <div className='flex flex-col gap-5 justify-end'>
                 <h3 className='font-semibold text-xl'>{product.name}</h3>
                 <div className='flex flex-col gap-2 items-left mt-2'>
-                    <p className='text-[#FF8200] text-xl'>{Number(product.price).toLocaleString()} VND</p>
+                    <p className='text-[#FF8200] text-xl'>{Number(currentPrice).toLocaleString()} VND</p>
                     {product.discount > 0 && (
                         <p className=' text-black opacity-50 text-sm line-through'>{Number(product.price).toLocaleString()} VND</p>
                     )}

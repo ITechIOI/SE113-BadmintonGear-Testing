@@ -37,7 +37,7 @@ export default function AdminLayout({ children }) {
                 {/* Main Content */}
                 <main className="w-full ">
                     <AdminHeader />
-                    <div className="px-10 py-10">
+                    <div className="px-10 py-10 pt-20">
                         {children}
                     </div>
                 </main>

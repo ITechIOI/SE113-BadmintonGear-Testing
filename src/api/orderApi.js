@@ -1,6 +1,6 @@
 const getAllOrders = async () => {
     try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/orders/orders/all`;
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/orders/orders/all?page=0&limit=100`;
         const token = localStorage.getItem('access_token');
         const response = await fetch(url, {
             method: 'GET',
@@ -17,7 +17,7 @@ const getAllOrders = async () => {
         return data.data.content;
     }
     catch (error) {
-        console.error('Error fetching orders:', error);
+        console.log('Error fetching orders:', error);
         return null;
     }
 }
@@ -40,7 +40,7 @@ const getOrderByUserId = async (userId) => {
         return data.data.content;
     }
     catch (error) {
-        console.error('Error fetching orders by user ID:', error);
+        console.log('Error fetching orders by user ID:', error);
         return null;
     }
 }
@@ -63,7 +63,7 @@ const getOrderById = async (orderId) => {
         return data.data;
     }
     catch (error) {
-        console.error('Error fetching order by ID:', error);
+        console.log('Error fetching order by ID:', error);
         return null;
     }
 }
@@ -88,7 +88,7 @@ const createOrder = async (orderData) => {
         return data.data;
     }
     catch (error) {
-        console.error('Error creating order:', error);
+        console.log('Error creating order:', error);
         return null;
     }
 }
@@ -109,6 +109,7 @@ const updateOrder = async (orderId, orderData) => {
             console.log('Failed to update order');
             return null;
         }
+        
         const data = await response.json();
         return data.data;
     }

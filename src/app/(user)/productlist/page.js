@@ -110,7 +110,7 @@ export default function ProductList() {
                 className='flex justify-between'
                 style={{ minHeight: "calc(100vh - 80px)", overflow: "hidden" }}
             >
-                <div className="w-[280px] h-full">
+                <div className="ml-20 w-[220px] h-full">
                     <div id="roadmap" className="flex items-center mb-20 mt-10">
                         <a className="text-gray-500" href="/">Home</a>
                         <label className="ml-3 mr-3">/</label>
@@ -182,7 +182,7 @@ export default function ProductList() {
                                 Not found products by image. Please try again.
                             </div>
                         )}
-                        <div className='grid grid-cols-5 gap-5'>
+                        <div className='grid grid-cols-4 gap-5'>
                             {displayedProducts.map((product) => (
                                 <ProductCard key={product.id} product={product} />
                             ))}

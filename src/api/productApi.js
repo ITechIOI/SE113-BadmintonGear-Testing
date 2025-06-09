@@ -103,6 +103,7 @@ const updateProduct = async (productId, productData) => {
             return null;
         }
         const data = await response.json();
+        alert('Product updated successfully');
         return data.data;
     } catch (error) {
         console.error('Error updating product:', error);

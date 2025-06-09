@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
-import Cookies from "js-cookie"; 
+import Cookies from "js-cookie";
 import { getProductByImage } from "@/api/productApi";
 
 const Header = () => {
@@ -11,6 +11,16 @@ const Header = () => {
     const [user, setUser] = useState(null); // State để lưu thông tin người dùng
     const router = useRouter();
     const fileInputRef = useRef();
+    const [searchValue, setSearchValue] = useState("");
+
+    const handleSearchKeyDown = (e) => {
+        if (e.key === "Enter") {
+            localStorage.setItem('searchProduct', searchValue);
+            setTimeout(() => {
+                window.location.href = '/productlist';
+            }, 50);
+        }
+    };
 
     // Kiểm tra cookie khi component được mount
     useEffect(() => {
@@ -20,12 +30,14 @@ const Header = () => {
         }
     }, []);
 
+
+
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('limit', 2); 
+            formData.append('limit', 5);
             const response = await getProductByImage(formData);
             if (response && response.length > 0) {
                 localStorage.setItem('productByImage', JSON.stringify(response));
@@ -90,8 +102,10 @@ const Header = () => {
                         <input
                             type="text"
                             placeholder="What are you looking for?"
-                            className={`w-64 p-2 outline-none ${searchVisible ? "visible" : "invisible"
-                                }`}
+                            className={`w-64 p-2 outline-none ${searchVisible ? "visible" : "invisible"}`}
+                            value={searchValue}
+                            onChange={e => setSearchValue(e.target.value)}
+                            onKeyDown={handleSearchKeyDown}
                         />
 
                         <button onClick={visibleSearchBar} className="flex items-center justify-center cursor-pointer pr-4">

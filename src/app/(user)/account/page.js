@@ -157,6 +157,7 @@ export default function Account() {
     const handleSaveChanges = async () => {
         const newPassword = document.getElementById('newPassword').value;
         let response = null;
+        let uploadRes = null;
 
         if (avatarPreview && fileInputRef.current.files[0]) {
             try {
@@ -164,7 +165,7 @@ export default function Account() {
                     await handleDeleteImage();
                 }
                 const file = fileInputRef.current.files[0];
-                const uploadRes = await uploadImage(file);
+                uploadRes = await uploadImage(file);
                 setUpdatedUser({ ...updatedUser, avatar: uploadRes });
             } catch (err) {
                 alert("Failed to upload avatar. Please try again.");
@@ -172,7 +173,7 @@ export default function Account() {
             }
         }
 
-        if (updatedUser !== null && (updatedUser.firstName + " " + updatedUser.lastName !== user.name || updatedUser.email !== user.email || updatedUser.phone !== user.phone || (updatedUser.avatar !== user.avatar))) {
+        if (updatedUser !== null && (updatedUser.firstName + " " + updatedUser.lastName !== user.name || updatedUser.email !== user.email || updatedUser.phone !== user.phone || uploadRes !== user.avatar)) {
             try {
                 response = await updateUser(updatedUser);
                 if (response) {

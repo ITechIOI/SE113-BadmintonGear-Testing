@@ -2,9 +2,10 @@
 import React, { useEffect, useState } from 'react'
 import OrderDetailItem from '@/components/OrderDetailItem';
 import { useSearchParams } from 'next/navigation';
-import { getOrderById } from '@/api/orderApi';
+import { getOrderById, updateOrder } from '@/api/orderApi';
 import { getDetailByOrderId } from '@/api/orderDetailApi';
 import { getUserById } from '@/api/userApi';
+import { pushNotification } from '@/api/notificationAPi';
 
 export default function OrderDetailsPage() {
     const searchParams = useSearchParams();
@@ -44,6 +45,7 @@ export default function OrderDetailsPage() {
     useEffect(() => {
         const fetchAll = async () => {
             await fetchOrder(orderId);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Delay to ensure order is fetched before details
             await fetchOrderDetails(orderId);
         };
         if (orderId) fetchAll();
@@ -66,6 +68,26 @@ export default function OrderDetailsPage() {
         }
         setSubtotal(st);
     }, [details]);
+    const handleConfirmOrder = async () => {
+        const updatedOrder = {
+            status: "Processing",
+        }
+        const response = await updateOrder(order.id, updatedOrder);
+        if (response) {
+            setOrder(response);
+            await pushNotification({
+                title: "Order Confirmed",
+                content: `Your order #${order.id} has been confirmed.`,
+                userId: order.userId,
+                orderId: order.id,
+                type: "email"
+            });
+            alert("Order confirmed successfully!");
+        } else {
+            console.log("Failed to confirm order");
+        }
+
+    }
 
     return (
         <div className='px-2 py-5'>
@@ -90,14 +112,24 @@ export default function OrderDetailsPage() {
                 </div>
                 <div className='flex gap-2'>
                     <div className='rounded-md bg-white border border-[#E0E2E7] px-4 py-2 flex items-center gap-2'>
-                        <select className='w-full  outline-none' name="status" id="status" defaultValue={order ? order.status : "pending"} value={order?order.status:"pending"}>
+                        <select className='w-full  outline-none' name="status" id="status" defaultValue={order ? order.status : "pending"} value={order ? order.status : "pending"}>
                             <option value="Order Placed">Order Placed</option>
-                            <option value="pending">Processing</option>
+                            <option value="pending">Pending</option>
+                            <option value="Processing">Processing</option>
                             <option value="Shipping">Shipping</option>
                             <option value="Delivered">Delivered</option>
                             <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
+                    {order.status === "pending" && (
+                        <button
+                            className="bg-green-600 text-white px-4 py-2 rounded-md ml-2"
+                            onClick={handleConfirmOrder}
+                        >
+                            Confirm Order
+                        </button>
+                    )}
+                    
                     <button className='flex gap-2 bg-[#ff8200] text-white px-4 py-2 rounded-md'>
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M4.99935 13.3333C4.99935 12.8731 5.37245 12.5 5.83268 12.5H7.49935C7.95959 12.5 8.33268 12.8731 8.33268 13.3333C8.33268 13.7936 7.95959 14.1667 7.49935 14.1667H5.83268C5.37245 14.1667 4.99935 13.7936 4.99935 13.3333Z" fill="white" />
@@ -235,23 +267,28 @@ export default function OrderDetailsPage() {
                             <tr>
                                 <td></td>
                                 <td></td>
-                                <td></td>
                                 <td className='py-2 px-4 '>SubTotal</td>
-                                <td className='py-2 px-4 '>${subtotal}</td>
+                                <td className='py-2 px-4 '>{Number(subtotal).toLocaleString()} VND</td>
                             </tr>
                             <tr>
-                                <td></td>
                                 <td></td>
                                 <td></td>
                                 <td className='py-2 px-4 '>Shipping Rate</td>
-                                <td className='py-2 px-4 '>${order.shippingAmount}</td>
+                                <td className='py-2 px-4 '>Free</td>
                             </tr>
+                            {order && order.discount && (
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td className='py-2 px-4 '>Discount</td>
+                                    <td className='py-2 px-4 '>-{Number(order.discount.percent).toLocaleString()} %</td>
+                                </tr>
+                            )}
                             <tr>
                                 <td></td>
                                 <td></td>
-                                <td></td>
                                 <td className='py-2 px-4 font-semibold'>Grand Total</td>
-                                <td className='py-2 px-4 font-semibold'>${order ? order.totalPrice : 0}</td>
+                                <td className='py-2 px-4 font-semibold'>{order ? Number(order.totalPrice).toLocaleString() : 0} VND</td>
                             </tr>
                         </tbody>
                     </table>

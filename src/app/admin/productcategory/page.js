@@ -124,13 +124,13 @@ export default function ProductCategory() {
 
     const handleSaveEdit = () => {
         if (!updatedCategory || !updatedCategory.id) {
-            fcreateCategory({ name: updatedCategory.name });
+            fcreateCategory({ name: updatedCategory.name, count: 0 });
         }
         else if (!updatedCategory || !updatedCategory.name) {
             alert('Please enter a valid category name.');
         }
         else {
-            fupdateCategory(updatedCategory.id, { name: updatedCategory.name });
+            fupdateCategory(updatedCategory.id, { name: updatedCategory.name, count: 0 });
         }
         setEditDialogOpen(false);
         setUpdatedCategory(null);

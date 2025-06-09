@@ -6,6 +6,7 @@ import { createOrderDetail } from '@/api/orderDetailApi';
 import { createPayment } from '@/api/paymentApi';
 import { deleteCart } from '@/api/cartApi';
 import { getPromotionByCode } from '@/api/promotionApi';
+import { pushNotification } from '@/api/notificationAPi';
 
 export default function CheckOut() {
     const [profile, setProfile] = useState({});
@@ -54,22 +55,6 @@ export default function CheckOut() {
             setPromotion(0);
         }
     }
-    function postAndRedirect(url, data) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = url;
-
-        Object.keys(data).forEach(key => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = data[key];
-            form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
-    }
 
     const handleCreateOrder = async () => {
         const orderData = {
@@ -93,15 +78,21 @@ export default function CheckOut() {
                     productId: item.productId,
                     orderId: newOrder.id,
                 };
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Giả lập độ trễ
                 await createOrderDetail(orderDetail);
                 if (item.id) {
                     await deleteCart(item.id);
                 }
+                // await pushNotification({
+                //     title: "Order Success",
+                //     message: `Đơn hàng #${newOrder.id} đã được tạo thành công!`,
+                //     userId: profile.id
+                // });
             }
             // Create payment
             const paymentData = {
                 orderId: newOrder.id,
-                amount: subtotal + shipping - promotion * subtotal / 100,
+                amount: 10,
                 paymentMethod: paymentMethod,
                 status: "pending",
             };
@@ -111,7 +102,7 @@ export default function CheckOut() {
                 if (paymentRes) {
                     window.location.href = paymentRes;
                     return;
-                } 
+                }
             }
             alert("Order placed successfully!");
             window.location.href = '/'; // chuyển hướng đến trang đơn hàng

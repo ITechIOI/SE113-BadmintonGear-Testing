@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { getLinkImage } from "@/api/splitService";
 import { addToCart } from "@/api/cartApi";
-import { addToFavorites } from "@/api/wishlist";
 
-export const ProductCard = ({ product }) => {
+export const ProductCardFlashSale = ({ product }) => {
   const [showAddToCart, setShowAddToCart] = useState(false);
   const [subtotal, setSubtotal] = useState(0);
   const handleAddToCart = async (e) => {
@@ -13,15 +12,14 @@ export const ProductCard = ({ product }) => {
     e.preventDefault();
     const data = {
       quantity: 1,
-      productId: product.id,
+      productId: product.product.id,
       userId: id,
     };
     await addToCart(data);
   };
 
   // const currentPrice = product.price;
-  const currentPrice =
-    product.price - (product.price * (product.discount || 0)) / 100;
+  const currentPrice = product.salePrice;
 
   const handleMouseEnter = () => {
     setShowAddToCart(true);
@@ -67,8 +65,8 @@ export const ProductCard = ({ product }) => {
       </div>
       <Image
         src={
-          product && product.imageUrl
-            ? getLinkImage(product.imageUrl)
+          product && product.product.imageUrl
+            ? getLinkImage(product.product.imageUrl)
             : "/images/placeholder.png"
         }
         alt={"Product"}
@@ -85,16 +83,14 @@ export const ProductCard = ({ product }) => {
         </button>
       )}
       <div className="flex flex-col gap-5 justify-end">
-        <h3 className="font-semibold text-xl">{product.name}</h3>
+        <h3 className="font-semibold text-xl">{product.product.name}</h3>
         <div className="flex flex-col gap-2 items-left mt-2">
           <p className="text-[#FF8200] text-xl">
             {Number(currentPrice).toLocaleString()} VND
           </p>
-          {product.discount > 0 && (
-            <p className=" text-black opacity-50 text-sm line-through">
-              {Number(product.price).toLocaleString()} VND
-            </p>
-          )}
+          <p className=" text-black opacity-50 text-sm line-through">
+            {Number(product.originalPrice).toLocaleString()} VND
+          </p>
         </div>
       </div>
       {/* <div className='flex items-center mt-2 text-xl'>

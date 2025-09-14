@@ -71,6 +71,10 @@ const Header = () => {
     setMenuVisible(!menuVisible);
   };
 
+  const visibleOrders = () => {
+    router.push("/order");
+  };
+
   return (
     <header className="fixed top-0 left-0 w-full bg-[#F5F5F5] z-50">
       <div className="flex justify-between items-center w-full p-4 ml-5">
@@ -240,7 +244,10 @@ const Header = () => {
                 />
                 <span>Manage My Account</span>
               </div>
-              <div className="mb-5 flex items-center gap-2">
+              <div
+                className="mb-5 flex items-center gap-2"
+                onClick={visibleOrders}
+              >
                 <Image
                   src="/icons/orderic.png"
                   alt="order"

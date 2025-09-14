@@ -31,7 +31,7 @@ export const ProductCard = ({ product }) => {
     setShowAddToCart(false);
   };
 
-  const handleClickOnAddToWishlist = (e) => {
+  const handleClickOnAddToWishlist = async (e) => {
     e.stopPropagation();
     e.preventDefault();
 
@@ -40,71 +40,80 @@ export const ProductCard = ({ product }) => {
       userId: userId,
       productId: product.id,
     };
-    addToFavorites(favoriteData);
+    await addToFavorites(favoriteData);
   };
 
   return (
     <div
-      className="min-w-[240px] relative bg-white w-[18%] p-3 rounded-xl text-poppins flex flex-col justify-between h-[350px]"
+      className="min-w-[240px] bg-white w-[18%] p-4 rounded-2xl shadow-md hover:shadow-xl 
+             transition-all duration-300 ease-in-out cursor-pointer flex flex-col justify-between h-[380px] relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={() => (window.location.href = `/product?id=${product.id}`)}
     >
+      {/* Badge giảm giá */}
       {product.discount > 0 && (
-        <div className="absolute top-4 left-4 bg-[#FF8200] text-white text-xs px-2 py-1 rounded">
+        <div className="absolute top-4 left-4 bg-[#FF3D00] text-white text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
           -{product.discount}%
         </div>
       )}
-      <div className="absolute top-4 right-4 bg-[#F5F5F5] p-2 rounded-full">
+
+      {/* Wishlist icon */}
+      <div className="absolute top-4 right-4 bg-white border border-gray-200 p-2 rounded-full shadow-sm hover:bg-[#FF8200] hover:text-white transition-colors">
         <Image
           src={"/icons/blwishlistic.png"}
           alt={"wish"}
-          width={30}
-          height={30}
+          width={22}
+          height={22}
           onClick={handleClickOnAddToWishlist}
           className="cursor-pointer"
         />
       </div>
-      <Image
-        src={
-          product && product.imageUrl
-            ? getLinkImage(product.imageUrl)
-            : "/images/placeholder.png"
-        }
-        alt={"Product"}
-        width={240}
-        height={240}
-        className="w-full h-auto object-contain rounded-t-lg mx-auto"
-      />
+
+      {/* Product image */}
+      <div className="flex-1 flex items-center justify-center">
+        <Image
+          src={
+            product && product.imageUrl
+              ? getLinkImage(product.imageUrl)
+              : "/images/placeholder.png"
+          }
+          alt={"Product"}
+          width={220}
+          height={220}
+          className="object-contain max-h-[220px]"
+        />
+      </div>
+
+      {/* Hover Add To Cart button */}
       {showAddToCart && (
         <button
-          className="w-[100%] absolute bottom-30 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded-md shadow-lg text-center"
+          className="absolute bottom-3 right-3 
+               bg-[#FF8200] text-white w-10 h-10 rounded-full 
+               shadow-md hover:bg-[#e56f00] transition-all duration-300 
+               flex items-center justify-center"
           onClick={handleAddToCart}
         >
-          Add To Cart
+          🛒
         </button>
       )}
-      <div className="flex flex-col gap-5 justify-end">
-        <h3 className="font-semibold text-xl">{product.name}</h3>
-        <div className="flex flex-col gap-2 items-left mt-2">
-          <p className="text-[#FF8200] text-xl">
-            {Number(currentPrice).toLocaleString()} VND
+
+      {/* Product info */}
+      <div className="mt-3 flex flex-col gap-2">
+        <h3 className="font-semibold text-lg text-gray-800 line-clamp-2 h-[48px]">
+          {product.name}
+        </h3>
+        <div className="flex flex-col gap-1">
+          <p className="text-[#FF8200] text-xl font-bold">
+            {Number(currentPrice).toLocaleString()} $
           </p>
           {product.discount > 0 && (
-            <p className=" text-black opacity-50 text-sm line-through">
-              {Number(product.price).toLocaleString()} VND
+            <p className="text-gray-400 text-sm line-through">
+              {Number(product.price).toLocaleString()} $
             </p>
           )}
         </div>
       </div>
-      {/* <div className='flex items-center mt-2 text-xl'>
-                {Array.from({ length: 5 }, (_, index) => (
-                    <span key={index} className={index < product.rating ? 'text-[#FFAD33]' : 'text-gray-300'}>
-                        ★
-                    </span>
-                ))}
-                <div className='text-black opacity-50 ml-4'>(23)</div>
-            </div> */}
     </div>
   );
 };

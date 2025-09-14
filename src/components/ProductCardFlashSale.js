@@ -86,10 +86,10 @@ export const ProductCardFlashSale = ({ product }) => {
         <h3 className="font-semibold text-xl">{product.product.name}</h3>
         <div className="flex flex-col gap-2 items-left mt-2">
           <p className="text-[#FF8200] text-xl">
-            {Number(currentPrice).toLocaleString()} VND
+            {Number(currentPrice).toLocaleString()} $
           </p>
           <p className=" text-black opacity-50 text-sm line-through">
-            {Number(product.originalPrice).toLocaleString()} VND
+            {Number(product.originalPrice).toLocaleString()} $
           </p>
         </div>
       </div>

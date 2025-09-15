@@ -1,20 +1,21 @@
 "use client";
-import React, { use, useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import SaleProgress from "@/components/SaleProgress";
 import RevenueChart from "@/components/RevenueChart";
 import BestSellingProductItem from "@/components/AdminBestSellingProductItem";
 import AdminOrderItem from "@/components/AdminOrderItem";
+import { getTotalRevenueByTime } from "@/api/orderDetailApi";
 
 export default function DashboardPage() {
   const [selectedOption, setSelectedOption] = useState("all-times");
-  const totalRevenue = 900000;
-  const revenueRatio = 15;
-  const totalSales = 1000000;
-  const salesRatio = 20;
+  const [totalRevenue, setTotalRevenue] = useState(900000);
+  const [revenueRatio, setRevenueRatio] = useState(10);
+  const [totalSales, setTotalSales] = useState(1000000);
+  const [salesRatio, setSalesRatio] = useState(20);
   // const productSKU = 5;
   // const productSKURatio = -10;
-  const balance = 500000;
-  const balanceRatio = 0;
+  const [balance, setBalance] = useState(500000);
+  const [balanceRatio, setBalanceRatio] = useState(0);
   const [isAllChecked, setIsAllChecked] = useState(false); // Trạng thái checkbox của thead
 
   const [listBestSellingProduct, setListBestSellingProduct] = useState([
@@ -171,6 +172,21 @@ export default function DashboardPage() {
     const allChecked = updatedOrders.every((order) => order.isChecked);
     setIsAllChecked(allChecked);
   };
+
+  useEffect(() => {
+    const fetchRevenue = async () => {
+      try {
+        const data = await getTotalRevenueByTime();
+        if (data) {
+          setTotalRevenue(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch revenue:", error);
+      }
+    };
+
+    fetchRevenue();
+  }, []);
 
   return (
     <div className="font-inter">

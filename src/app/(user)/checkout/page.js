@@ -19,6 +19,7 @@ export default function CheckOut() {
   const [paymentMethod, setPaymentMethod] = useState("Cash On Delivery");
   const shipping = 0;
   const [couponCode, setCouponCode] = useState("");
+  const [totalPrice, setTotalPrice] = useState(0);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -87,7 +88,6 @@ export default function CheckOut() {
           orderId: newOrder.id,
           price: item.price,
         };
-        console.log("Creating order detail:", orderDetail);
         await new Promise((resolve) => setTimeout(resolve, 1000)); // Giả lập độ trễ
         await createOrderDetail(orderDetail);
         if (item.id) {
@@ -100,15 +100,25 @@ export default function CheckOut() {
         // });
       }
       // Create payment
+
       const paymentData = {
         orderId: newOrder.id,
-        amount: 10,
+        amount:
+          subtotal -
+          (discount.percent ? (discount.percent * subtotal) / 100 : 0),
         paymentMethod: paymentMethod,
         status: "pending",
       };
-      if (paymentMethod === "Paypal") {
+      if (paymentMethod === "paypal") {
         const paymentRes = await createPayment(paymentData);
 
+        if (paymentRes) {
+          window.location.href = paymentRes;
+          return;
+        }
+      } else {
+        paymentData.paymentMethod = "cod";
+        const paymentRes = await createPayment(paymentData);
         if (paymentRes) {
           window.location.href = paymentRes;
           return;

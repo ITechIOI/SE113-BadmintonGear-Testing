@@ -113,7 +113,8 @@ export default function ProductPage() {
   }, [idProduct]);
 
   return (
-    <div className="max-w-[1800px] mx-auto">
+    // Thay thế div container ngoài cùng
+    <div className="max-w-[1800px] mx-auto px-4 md:px-6 lg:px-8">
       <div id="roadmap" className="flex items-center mt-10 ml-15">
         <a className="text-gray-500" href="/">
           Home
@@ -259,7 +260,7 @@ export default function ProductPage() {
           </div>
         </div>
         <div className="h-fit  border-b border-gray-500 pb-5">
-          <div className="flex items-center justify-center mx-40 gap-20 text-lg">
+          <div className="flex items-center justify-center mx-40 gap-20 text-lg cursor-pointer">
             <p
               className={descriptionVisible ? "font-semibold" : ""}
               onClick={handleDescriptionClick}

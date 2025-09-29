@@ -58,4 +58,114 @@ const getLatestSaleProducts = async (idFlashSale) => {
   }
 };
 
-export { getFlashSaleInformation, getLatestSaleProducts };
+const addFlashSale = async (flashSaleData) => {
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale/new`;
+  const token = localStorage.getItem("access_token");
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(flashSaleData),
+  });
+  if (response.status !== 200) {
+    alert("Failed to create flash sale");
+    return null;
+  }
+  const data = await response.json();
+  alert("Flash sale created successfully");
+  return data.data;
+};
+
+const deleteFlashSale = async (id) => {
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale/${id}`;
+  const token = localStorage.getItem("access_token");
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (response.status !== 200) {
+    alert("Failed to delete flash sale");
+    return false;
+  }
+  alert("Flash sale deleted successfully");
+  return true;
+};
+
+const updateFlashSale = async (id, flashSaleData) => {
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale/${id}`;
+  const token = localStorage.getItem("access_token");
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(flashSaleData),
+  });
+  if (response.status !== 200) {
+    alert("Failed to update flash sale");
+    return null;
+  }
+  const data = await response.json();
+  alert("Flash sale updated successfully");
+  return data.data;
+};
+
+const addProductToFlashSale = async (details) => {
+  try {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale-detail/new`;
+    const token = localStorage.getItem("access_token");
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(details),
+    });
+    if (!response.ok) {
+      console.log("Failed to add product to flash sale");
+      return null;
+    }
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error("Error adding product to flash sale:", error);
+    return null;
+  }
+};
+
+const removeProductFromFlashSale = async (id) => {
+  try {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale-detail/${id}`;
+    const token = localStorage.getItem("access_token");
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      console.log("Failed to remove product from flash sale");
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error removing product from flash sale:", error);
+    return false;
+  }
+};
+
+export {
+  getFlashSaleInformation,
+  getLatestSaleProducts,
+  addFlashSale,
+  updateFlashSale,
+  deleteFlashSale,
+  addProductToFlashSale,
+  removeProductFromFlashSale,
+};

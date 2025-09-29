@@ -1,7 +1,10 @@
 import React from "react";
 import { addToCart } from "@/api/cartApi";
+import { useRouter } from "next/navigation";
 
 export default function OrderItem(item) {
+  const router = useRouter();
+
   const handleClickBuyAgain = () => {
     console.log("Buy Again clicked for order ID:", item.item.id);
     const formData = {
@@ -10,6 +13,10 @@ export default function OrderItem(item) {
       userId: JSON.parse(localStorage.getItem("user_profile")).id,
     };
     addToCart(formData);
+  };
+
+  const handleRate = () => {
+    router.push(`/review?orderId=${item.item.id}`);
   };
 
   return (
@@ -46,7 +53,10 @@ export default function OrderItem(item) {
             </button>
           )}
           {item.item.state === "completed" && (
-            <button className="bg-[#ff8200] hover:bg-[#e56f00] text-white font-medium rounded-md px-3 py-1.5 text-sm transition-colors">
+            <button
+              className="bg-[#ff8200] hover:bg-[#e56f00] text-white font-medium rounded-md px-3 py-1.5 text-sm transition-colors"
+              onClick={handleRate}
+            >
               Rate
             </button>
           )}

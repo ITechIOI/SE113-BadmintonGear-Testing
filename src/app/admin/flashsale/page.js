@@ -1,22 +1,15 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import AdminProductItem from "@/components/AdminProductItem";
-import { getAllProducts, deleteProductById } from "@/api/productApi";
-import { getAllCategories } from "@/api/categoryApi";
+import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Product() {
-  const [products, setProducts] = useState([]);
-  const [displayedProducts, setDisplayedProducts] = useState([]);
+export default function FlashSalePage() {
+  const [isAllChecked, setIsAllChecked] = useState(false);
+  const [flashSales, setFlashSales] = useState([]);
+  const [displayedFlashSales, setDisplayedFlashSales] = useState([]);
   const [isCheck, setIsCheck] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const [isAllChecked, setIsAllChecked] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [brand, setBrand] = useState([]);
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(Infinity);
-  const [filterMin, setFilterMin] = useState(minPrice);
-  const [filterMax, setFilterMax] = useState(maxPrice);
   const filterRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -26,173 +19,140 @@ export default function Product() {
     }
     if (showFilter) {
       document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showFilter]);
 
-  useEffect(() => {
-    setFilterMin(minPrice);
-    setFilterMax(maxPrice);
-  }, [minPrice, maxPrice]);
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+  const fetchAllFlashSales = async () => {
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale/all`;
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        console.log("Failed to fetch flash sales");
+        return;
+      }
+      const data = await res.json();
+      const list = (data?.data?.content ?? []).map((fs) => ({
+        ...fs,
+        isChecked: false,
+      }));
+      setFlashSales(list);
+      setDisplayedFlashSales(list);
+    } catch (e) {
+      console.error("Error fetching flash sales:", e);
+    }
+  };
+
+  const deleteFlashSale = async (id) => {
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale/${id}`;
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status !== 200) {
+        alert("Failed to delete flash sale");
+        return false;
+      }
+      alert("Flash sale deleted successfully");
+      return true;
+    } catch (e) {
+      console.error("Error deleting flash sale:", e);
+      return false;
+    }
+  };
 
   const handleSelectAll = () => {
     const newCheckedState = !isAllChecked;
     setIsAllChecked(newCheckedState);
-    setProducts(
-      products.map((product) => ({ ...product, isChecked: newCheckedState }))
-    );
+    const updated = flashSales.map((fs) => ({
+      ...fs,
+      isChecked: newCheckedState,
+    }));
+    setFlashSales(updated);
+    setDisplayedFlashSales(updated);
   };
 
-  const fetchCategory = async () => {
-    const response = await getAllCategories();
-    if (response.data.content) {
-      setCategories(response.data.content);
+  const handleCheck = (id) => {
+    const updated = flashSales.map((fs) =>
+      fs.id === id ? { ...fs, isChecked: !fs.isChecked } : fs
+    );
+    setFlashSales(updated);
+    setDisplayedFlashSales(updated);
+    setIsAllChecked(updated.every((fs) => fs.isChecked));
+  };
+
+  const handleDeleteChecked = async () => {
+    const checked = flashSales.filter((fs) => fs.isChecked);
+    if (checked.length === 0) {
+      alert("No flash sale selected.");
+      return;
+    }
+    if (window.confirm(`Delete ${checked.length} flash sale(s)?`)) {
+      for (const item of checked) {
+        // eslint-disable-next-line no-await-in-loop
+        await deleteFlashSale(item.id);
+      }
+      fetchAllFlashSales();
     }
   };
 
-  // Hàm xử lý khi checkbox trong tbody được chọn
-  const handleProductCheck = (id) => {
-    const updateProducts = products.map((product) =>
-      product.id === id
-        ? { ...product, isChecked: !product.isChecked }
-        : product
-    );
-    setProducts(updateProducts);
-
-    // Kiểm tra nếu tất cả các checkbox con đều được chọn
-    const allChecked = updateProducts.every((product) => product.isChecked);
-    setIsAllChecked(allChecked);
-  };
-
-  const fetchProducts = async () => {
-    const response = await getAllProducts();
-    if (response) {
-      const productsWithCheck = response.map((product) => ({
-        ...product,
-        isChecked: false, // Thêm thuộc tính isChecked vào từng sản phẩm
-      }));
-      setProducts(productsWithCheck);
-      setDisplayedProducts(productsWithCheck);
-      console.log(productsWithCheck);
+  const handleDeleteOne = async (id) => {
+    if (window.confirm("Delete this flash sale?")) {
+      const ok = await deleteFlashSale(id);
+      if (ok) fetchAllFlashSales();
     }
   };
 
   const handleSearchChange = (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const filteredProducts = products.filter(
-      (product) =>
-        product.name.toLowerCase().includes(searchTerm) ||
-        product.brand.toLowerCase().includes(searchTerm) ||
-        product.category.name.toLowerCase().includes(searchTerm)
-    );
-    setDisplayedProducts(filteredProducts);
-  };
+    const term = e.target.value.toLowerCase().trim();
 
-  const deleteProduct = async (id) => {
-    const response = await deleteProductById(id);
-    if (response) {
-      setProducts(products.filter((product) => product.id !== id));
-      setDisplayedProducts(
-        displayedProducts.filter((product) => product.id !== id)
-      );
-    } else {
-      console.log("Failed to delete product");
-      alert("Failed to delete product with ID: " + id);
-    }
-  };
-
-  const hanndleDeleteProduct = (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      if (deleteProduct(id)) {
-        alert("Product deleted successfully");
-      } else {
-        alert("Failed to delete product");
-      }
-    }
-  };
-
-  const handleDeleteSelectedProducts = () => {
-    const selectedProducts = products.filter((product) => product.isChecked);
-    if (selectedProducts.length === 0) {
-      alert("No products selected for deletion");
+    if (!term) {
+      setDisplayedFlashSales(flashSales);
       return;
     }
 
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedProducts.length} selected products?`
-      )
-    ) {
-      selectedProducts.forEach((product) => {
-        deleteProduct(product.id);
-      });
-      setIsCheck(false);
-      setIsAllChecked(false);
-    }
+    const filtered = flashSales.filter((fs) => {
+      const name = (fs.name ?? "").toLowerCase();
+      const idStr = String(fs.id ?? "");
+      return name.includes(term) || idStr.includes(term);
+    });
+
+    setDisplayedFlashSales(filtered);
   };
-  const handleFilterChange = () => {
-    const selectedBrand = document.getElementById("brand").value;
-    const selectedCategory = document.getElementById("category").value;
-    const minPrice = parseFloat(document.getElementById("min").value) || 0;
-    const maxPrice =
-      parseFloat(document.getElementById("max").value) || Infinity;
-    let filteredProducts = products;
-    if (selectedBrand) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.brand === selectedBrand
-      );
-    }
-    if (selectedCategory) {
-      filteredProducts = filteredProducts.filter(
-        (product) => String(product.category.id) === selectedCategory
-      );
-    }
-    if (minPrice || maxPrice < Infinity) {
-      filteredProducts = filteredProducts.filter((product) => {
-        const price = parseFloat(product.price);
-        return price >= minPrice && price <= maxPrice;
-      });
-    }
-    setDisplayedProducts(filteredProducts);
-    setShowFilter(false);
+
+  const computeStatus = (fs) => {
+    const now = Date.now();
+    const start = new Date(fs.startTime).getTime();
+    const end = new Date(fs.endTime).getTime();
+    if (now < start) return "upcoming";
+    if (now > end) return "expired";
+    return "active";
   };
 
   useEffect(() => {
-    const anyChecked = products.some((product) => product.isChecked);
-    setIsCheck(anyChecked);
-    setDisplayedProducts(products);
-    const brand = Array.from(new Set(products.map((product) => product.brand)));
-    setBrand(brand);
-    const minPrice = Math.min(
-      ...products.map((product) => parseFloat(product.price))
-    );
-    const maxPrice = Math.max(
-      ...products.map((product) => parseFloat(product.price))
-    );
-    if (minPrice > maxPrice) {
-      setMinPrice(0);
-      setMaxPrice(Infinity);
-    }
-    setMinPrice(minPrice);
-    setMaxPrice(maxPrice);
-  }, [products]);
-
-  useEffect(() => {
-    const fetchAll = async () => {
-      await fetchProducts();
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Delay 500ms
-      await fetchCategory();
-    };
-    fetchAll();
+    fetchAllFlashSales();
   }, []);
 
+  useEffect(() => {
+    setIsCheck(flashSales.some((x) => x.isChecked));
+  }, [flashSales]);
+
   return (
-    <div className="px-2 py-5">
+    <div className="font-inter">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold">Product</h1>
+          <h1 className="text-3xl font-bold">Flash Sales</h1>
           <div id="roadmap" className="flex items-center mt-2">
             <a className="text-[#ff8200]" href="/admin/dashboard">
               Dashboard
@@ -213,8 +173,8 @@ export default function Product() {
                 />
               </svg>
             </label>
-            <a className="text-[#667085]" href="/admin/productlist">
-              Product List
+            <a className="text-[#667085]" href="/admin/flashsale">
+              Flash Sale List
             </a>
           </div>
         </div>
@@ -240,7 +200,7 @@ export default function Product() {
           </button>
           <button
             className="bg-[#ff8200] text-white px-4 py-2 rounded-md flex gap-2 items-center"
-            onClick={() => (window.location.href = "/admin/addproduct")}
+            onClick={() => router.push("/admin/flashsaledetail?mode=add")}
           >
             <svg
               width="20"
@@ -254,12 +214,12 @@ export default function Product() {
                 fill="white"
               />
             </svg>
-            Add Product
+            Add Flash Sale
           </button>
           {isCheck && (
             <button
               className="bg-[#ff8200] text-white px-4 py-2 rounded-md flex gap-2 items-center"
-              onClick={handleDeleteSelectedProducts}
+              onClick={handleDeleteChecked}
             >
               <svg
                 width="20"
@@ -307,7 +267,7 @@ export default function Product() {
           </svg>
           <input
             type="text"
-            placeholder="Search product..."
+            placeholder="Search flash sale..."
             className="px-2 py-2 outline-none"
             onChange={handleSearchChange}
           />
@@ -353,90 +313,34 @@ export default function Product() {
         {showFilter && (
           <div
             ref={filterRef}
-            className="absolute top-65 right-10 bg-white shadow-lg rounded-md p-4 w-64"
+            className="absolute top-16 right-5 bg-white shadow-lg rounded-md p-4 border border-[#E0E2E7]"
           >
-            <h3 className="text-lg font-semibold mb-2">Filter Options</h3>
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Brand
-              </label>
-              <select
-                id="brand"
-                className="w-full mb-3 border border-[#E0E2E7] rounded-md px-2 py-1"
-                defaultValue={""}
-              >
-                <option value="">All Brands</option>
-                {brand.map((b, index) => (
-                  <option key={index} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Category
-              </label>
-              <select
-                id="category"
-                className="w-full mb-3 border border-[#E0E2E7] rounded-md px-2 py-1"
-                defaultValue={""}
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Price Range
-              </label>
-              <div className="flex w-full justify-between items-center">
-                <label htmlFor="min" className="block mb-1 text-sm">
-                  Min: {filterMin}
-                </label>
-                <input
-                  type="range"
-                  id="min"
-                  className=""
-                  min={minPrice}
-                  max={filterMax}
-                  value={filterMin}
-                  onChange={(e) => {
-                    setFilterMin(Number(e.target.value));
-                  }}
-                />
-              </div>
-              <div className="mt-2 flex w-full justify-between items-center">
-                <label htmlFor="max" className="block mb-1 text-sm">
-                  Max:{filterMax}
-                </label>
-                <input
-                  type="range"
-                  id="max"
-                  min={filterMin}
-                  max={maxPrice}
-                  value={filterMax}
-                  onChange={(e) => {
-                    setFilterMax(Number(e.target.value));
-                  }}
-                />
-              </div>
-            </div>
-            <button
-              className="bg-[#ff8200] text-white px-4 py-2 rounded-md w-full"
-              onClick={handleFilterChange}
+            <h3 className="font-semibold mb-2">Filter Flash Sales</h3>
+            <select
+              className="w-full p-2 border border-[#E0E2E7] rounded-md"
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) {
+                  setDisplayedFlashSales(flashSales);
+                } else {
+                  const filtered = flashSales.filter(
+                    (fs) => computeStatus(fs) === v
+                  );
+                  setDisplayedFlashSales(filtered);
+                }
+              }}
+              defaultValue=""
             >
-              Apply Filters
-            </button>
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="expired">Expired</option>
+            </select>
           </div>
         )}
       </div>
 
-      <div className=" shadow-md rounded-md border border-[#E0E2E7] mt-5">
+      <div className="shadow-md rounded-md border border-[#E0E2E7] mt-5">
         <table className="w-full py-2 rounded-md overflow-hidden ">
           <thead className="bg-[#F9F9FC] font-medium border-b border-[#F0F1F3]">
             <tr className="text-center text-[#344054] font-semibold rounded-md">
@@ -448,28 +352,86 @@ export default function Product() {
                   onChange={handleSelectAll}
                 />
               </th>
-              <th className="py-2 px-4">Product</th>
-              <th className="py-2 px-4">Brand</th>
-              <th className="py-2 px-4">Category</th>
-              <th className="py-2 px-4">Stock</th>
-              <th className="py-2 px-4">Price</th>
+              <th className="py-2 px-4">Name</th>
+              <th className="py-2 px-4">Description</th>
+              <th className="py-2 px-4">Start</th>
+              <th className="py-2 px-4">End</th>
               <th className="py-2 px-4">Status</th>
-              <th className="py-2 px-4">Added</th>
               <th className="py-2 px-4">Action</th>
             </tr>
           </thead>
           <tbody className="text-[#344054] font-normal text-center">
-            {displayedProducts.map((product) => (
-              <AdminProductItem
-                key={product.id}
-                product={product}
-                onCheck={() => handleProductCheck(product.id)}
-                onDelete={() => hanndleDeleteProduct(product.id)}
-              />
+            {displayedFlashSales.map((fs) => (
+              <tr key={fs.id} className="border-b border-[#F0F1F3]">
+                <td>
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 accent-[#ff8200] ml-5 my-4"
+                    checked={!!fs.isChecked}
+                    onChange={() => handleCheck(fs.id)}
+                  />
+                </td>
+                <td className="py-2 px-4">{fs.name}</td>
+                <td
+                  className="py-2 px-4 max-w-[360px] truncate"
+                  title={fs.description}
+                >
+                  {fs.description}
+                </td>
+                <td className="py-2 px-4">
+                  {fs.startTime ? new Date(fs.startTime).toLocaleString() : "-"}
+                </td>
+                <td className="py-2 px-4">
+                  {fs.endTime ? new Date(fs.endTime).toLocaleString() : "-"}
+                </td>
+                <td className="py-2 px-4">
+                  <span
+                    className={`px-2 py-1 rounded-full ${
+                      computeStatus(fs) === "active"
+                        ? "text-[#0D894F] bg-[#E7F4EE]"
+                        : computeStatus(fs) === "upcoming"
+                        ? "text-[#667085] bg-[#F0F1F3]"
+                        : "text-[#F04438] bg-[#FEEDEC]"
+                    }`}
+                  >
+                    {computeStatus(fs)}
+                  </span>
+                </td>
+                <td className="py-2 px-4">
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      className="text-[#ff8200]"
+                      onClick={() =>
+                        router.push(
+                          `/admin/flashsaledetail?id=${fs.id}&&mode=view`
+                        )
+                      }
+                    >
+                      View
+                    </button>
+                    <button
+                      className="text-[#ff8200]"
+                      onClick={() =>
+                        router.push(
+                          `/admin/flashsaledetail?id=${fs.id}&&mode=edit`
+                        )
+                      }
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="text-[#F04438]"
+                      onClick={() => handleDeleteOne(fs.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
-        {/* Pagination*/}
+        {/* Pagination can be added here if backend supports paging */}
       </div>
     </div>
   );

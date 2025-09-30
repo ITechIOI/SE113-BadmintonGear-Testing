@@ -18,6 +18,10 @@ export default function Product() {
   const [filterMax, setFilterMax] = useState(maxPrice);
   const filterRef = useRef(null);
 
+  // ⬇️ Thêm state cho pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
@@ -52,7 +56,6 @@ export default function Product() {
     }
   };
 
-  // Hàm xử lý khi checkbox trong tbody được chọn
   const handleProductCheck = (id) => {
     const updateProducts = products.map((product) =>
       product.id === id
@@ -60,8 +63,6 @@ export default function Product() {
         : product
     );
     setProducts(updateProducts);
-
-    // Kiểm tra nếu tất cả các checkbox con đều được chọn
     const allChecked = updateProducts.every((product) => product.isChecked);
     setIsAllChecked(allChecked);
   };
@@ -71,11 +72,10 @@ export default function Product() {
     if (response) {
       const productsWithCheck = response.map((product) => ({
         ...product,
-        isChecked: false, // Thêm thuộc tính isChecked vào từng sản phẩm
+        isChecked: false,
       }));
       setProducts(productsWithCheck);
       setDisplayedProducts(productsWithCheck);
-      console.log(productsWithCheck);
     }
   };
 
@@ -88,6 +88,7 @@ export default function Product() {
         product.category.name.toLowerCase().includes(searchTerm)
     );
     setDisplayedProducts(filteredProducts);
+    setCurrentPage(1); // reset về trang đầu khi search
   };
 
   const deleteProduct = async (id) => {
@@ -98,7 +99,6 @@ export default function Product() {
         displayedProducts.filter((product) => product.id !== id)
       );
     } else {
-      console.log("Failed to delete product");
       alert("Failed to delete product with ID: " + id);
     }
   };
@@ -132,12 +132,14 @@ export default function Product() {
       setIsAllChecked(false);
     }
   };
+
   const handleFilterChange = () => {
     const selectedBrand = document.getElementById("brand").value;
     const selectedCategory = document.getElementById("category").value;
     const minPrice = parseFloat(document.getElementById("min").value) || 0;
     const maxPrice =
       parseFloat(document.getElementById("max").value) || Infinity;
+
     let filteredProducts = products;
     if (selectedBrand) {
       filteredProducts = filteredProducts.filter(
@@ -157,6 +159,7 @@ export default function Product() {
     }
     setDisplayedProducts(filteredProducts);
     setShowFilter(false);
+    setCurrentPage(1); // reset về trang đầu khi filter
   };
 
   useEffect(() => {
@@ -182,11 +185,17 @@ export default function Product() {
   useEffect(() => {
     const fetchAll = async () => {
       await fetchProducts();
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Delay 500ms
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await fetchCategory();
     };
     fetchAll();
   }, []);
+
+  // ⬇️ Pagination logic
+  const totalPages = Math.ceil(displayedProducts.length / rowsPerPage);
+  const indexOfLast = currentPage * rowsPerPage;
+  const indexOfFirst = indexOfLast - rowsPerPage;
+  const paginatedProducts = displayedProducts.slice(indexOfFirst, indexOfLast);
 
   return (
     <div className="px-2 py-5">
@@ -436,7 +445,7 @@ export default function Product() {
         )}
       </div>
 
-      <div className=" shadow-md rounded-md border border-[#E0E2E7] mt-5">
+      <div className="shadow-md rounded-md border border-[#E0E2E7] mt-5">
         <table className="w-full py-2 rounded-md overflow-hidden ">
           <thead className="bg-[#F9F9FC] font-medium border-b border-[#F0F1F3]">
             <tr className="text-center text-[#344054] font-semibold rounded-md">
@@ -459,7 +468,7 @@ export default function Product() {
             </tr>
           </thead>
           <tbody className="text-[#344054] font-normal text-center">
-            {displayedProducts.map((product) => (
+            {paginatedProducts.map((product) => (
               <AdminProductItem
                 key={product.id}
                 product={product}
@@ -469,7 +478,63 @@ export default function Product() {
             ))}
           </tbody>
         </table>
-        {/* Pagination*/}
+
+        {/* Pagination */}
+        {/* Pagination – giao diện cũ */}
+        <div className="flex justify-between items-center mt-5 px-6 py-4 bg-[#F9FAFB]">
+          <div className="text-gray-600 text-sm">
+            Page <span className="font-semibold">{currentPage}</span> of{" "}
+            <span className="font-semibold">{totalPages || 1}</span>
+          </div>
+
+          <div className="flex justify-center items-center mt-5 px-6 py-4 gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+            >
+              ←
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded text-sm border ${
+                  currentPage === i + 1
+                    ? "bg-[#ff8200] text-white border-[#ff8200]"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+            >
+              →
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-600">Rows:</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="border rounded px-2 py-1"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   );

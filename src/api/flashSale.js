@@ -1,6 +1,6 @@
-const getFlashSaleInformation = async () => {
+const getFlashSaleInformation = async (page = 0, limit = 10) => {
   try {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale/all`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale/all?page=${page}&limit=${limit}`;
     const token = localStorage.getItem("access_token");
     const response = await fetch(url, {
       method: "GET",

@@ -2,49 +2,57 @@
 import React, { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import OrderItem from "@/components/OrderItem";
-import { getAllOrders } from "@/api/orderApi";
+import { getOrderByUserId } from "@/api/orderApi";
 
 export default function CancellationOrderPage() {
-  const [order, setOrder] = useState([
-    // { id: "1", total: 123, state: "Cancelled" },
-  ]);
+  const [order, setOrder] = useState([]);
   const [user, setUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const storedUser = Cookies.get("user"); // Lấy thông tin người dùng từ cookie
-
+        const storedUser = Cookies.get("user");
         if (storedUser) {
-          setUser(JSON.parse(storedUser)); // Nếu có dữ liệu, cập nhật state `user`
+          setUser(JSON.parse(storedUser));
         }
 
         const userId = JSON.parse(localStorage.getItem("user_profile"))?.id;
-        if (!userId) {
-          console.warn("No user profile found in localStorage");
-          return;
-        }
+        if (!userId) return;
 
-        const orders = await getAllOrders(userId);
+        const result = await getOrderByUserId(
+          userId,
+          currentPage - 1,
+          rowsPerPage
+        );
 
-        // Chỉ lấy các đơn hàng có trạng thái là "cancelled"
-        const orderFormat = orders
-          .filter((ord) => ord.status === "cancelled")
-          .map((ord) => ({
+        if (result && result.content) {
+          const allOrders = result.content;
+          const cancelledOrders = allOrders.filter(
+            (ord) => ord.status?.toLowerCase() === "cancelled"
+          );
+
+          const orderFormat = cancelledOrders.map((ord) => ({
             id: ord.id,
             total: ord.totalPrice,
             state: "cancelled",
           }));
 
-        console.log("Fetched cancelled orders:", orderFormat);
+          setOrder(orderFormat);
 
-        setOrder(orderFormat);
+          // ⚠️ Tính lại số trang dựa trên cancelledOrders
+          const totalCancelled = cancelledOrders.length;
+          setTotalPages(Math.ceil(totalCancelled / rowsPerPage) || 1);
+        }
       } catch (error) {
         console.error("Error fetching orders:", error);
       }
     };
 
     fetchOrders();
-  }, []);
+  }, [currentPage, rowsPerPage]);
 
   return (
     <div>
@@ -106,6 +114,63 @@ export default function CancellationOrderPage() {
               ))}
             </tbody>
           </table>
+
+          <div className="flex justify-between items-center mt-5 px-6 py-4 bg-[#F9FAFB]">
+            <div className="text-gray-600 text-sm">
+              Page <span className="font-semibold">{currentPage}</span> of{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </div>
+
+            <div className="flex justify-center items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+              >
+                ←
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`px-3 py-1 rounded text-sm border ${
+                    currentPage === i + 1
+                      ? "bg-[#ff8200] text-white border-[#ff8200]"
+                      : "hover:bg-gray-100"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+              >
+                →
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-600">Rows:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="border rounded px-2 py-1"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
     </div>

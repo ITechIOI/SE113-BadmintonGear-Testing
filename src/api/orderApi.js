@@ -1,6 +1,6 @@
-const getAllOrders = async () => {
+const getAllOrders = async (page = 0, limit = 10) => {
   try {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/orders/orders/all?page=0&limit=10`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/orders/orders/all?page=${page}&limit=${limit}`;
     const token = localStorage.getItem("access_token");
     const response = await fetch(url, {
       method: "GET",
@@ -10,33 +10,31 @@ const getAllOrders = async () => {
       },
     });
     if (!response.ok) {
-      console.log("Failed to fetch user by ID");
+      console.log("Failed to fetch orders");
       return null;
     }
     const data = await response.json();
-    return data.data.content;
+    return data.data; // trả về object chứa content, totalPages, totalElements
   } catch (error) {
     console.log("Error fetching orders:", error);
     return null;
   }
 };
 
-const getOrderByUserId = async (userId) => {
+const getOrderByUserId = async (userId, page = 0, limit = 10) => {
   try {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/orders/orders/user/${userId}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/orders/orders/user/${userId}?page=${page}&limit=${limit}`;
     const token = localStorage.getItem("access_token");
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) {
       console.log("Failed to fetch orders by user ID");
       return null;
     }
     const data = await response.json();
-    return data.data.content;
+    return data.data; // chứa content, totalPages, totalElements
   } catch (error) {
     console.log("Error fetching orders by user ID:", error);
     return null;

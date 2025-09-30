@@ -2,49 +2,61 @@
 import React, { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import OrderItem from "@/components/OrderItem";
-import { getAllOrders } from "@/api/orderApi";
+import { getOrderByUserId } from "@/api/orderApi";
 
 export default function CompletionOrderPage() {
-  const [order, setOrder] = useState([
-    // { id: "1", total: 123, state: "Cancelled" },
-  ]);
+  const [orders, setOrders] = useState([]);
   const [user, setUser] = useState(null);
+
+  // Phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const storedUser = Cookies.get("user"); // lấy từ cookie
-
-        if (storedUser) {
-          setUser(JSON.parse(storedUser)); // parse sang object thay vì giữ dạng string
-        }
+        const storedUser = Cookies.get("user");
+        if (storedUser) setUser(JSON.parse(storedUser));
 
         const userProfile = localStorage.getItem("user_profile");
-        if (!userProfile) {
-          console.warn("No user_profile found in localStorage");
-          return;
-        }
+        if (!userProfile) return;
 
         const userId = JSON.parse(userProfile).id;
-        const orders = await getAllOrders(userId);
+        const result = await getOrderByUserId(
+          userId,
+          currentPage - 1, // API thường 0-based
+          rowsPerPage
+        );
 
-        // Lọc ra đơn hàng có trạng thái completed
-        const orderFormat = orders
-          .filter((ord) => ord.status === "completed")
-          .map((ord) => ({
+        if (result && result.content) {
+          // lọc các đơn hàng completed
+          const completedOrders = result.content.filter(
+            (ord) => ord.status?.toLowerCase() === "completed"
+          );
+
+          const orderFormat = completedOrders.map((ord) => ({
             id: ord.id,
             total: ord.totalPrice,
             state: "completed",
           }));
 
-        console.log("Fetched completed orders:", orderFormat);
-        setOrder(orderFormat);
+          setOrders(orderFormat);
+
+          // tính lại số trang dựa trên completedOrders
+          const totalCompleted =
+            result.totalElements && result.content.length > 0
+              ? completedOrders.length
+              : 0;
+          setTotalPages(Math.ceil(totalCompleted / rowsPerPage) || 1);
+        }
       } catch (error) {
         console.error("Error fetching orders:", error);
       }
     };
 
     fetchOrders();
-  }, []);
+  }, [currentPage, rowsPerPage]);
 
   return (
     <div>
@@ -69,6 +81,7 @@ export default function CompletionOrderPage() {
           </span>
         </div>
       </div>
+
       <div className="mx-20 grid grid-cols-[20%_1fr] gap-5 mt-10">
         <div className="flex flex-col gap-3 font-medium">
           <a href="/account">Manage My Account</a>
@@ -86,6 +99,7 @@ export default function CompletionOrderPage() {
           <a href="/wishlist">My WishList</a>
           <a href="/promotion">My Promotions</a>
         </div>
+
         <div className="w-full bg-white pb-10">
           <p className="text-[#ff8200] text-xl mt-10 w-4/5 mx-auto">
             My Completions
@@ -101,11 +115,69 @@ export default function CompletionOrderPage() {
               </tr>
             </thead>
             <tbody className="w-full text-center">
-              {order.map((item) => (
+              {orders.map((item) => (
                 <OrderItem key={item.id} item={item} />
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          <div className="flex justify-between items-center mt-5 px-6 py-4 bg-[#F9FAFB]">
+            <div className="text-gray-600 text-sm">
+              Page <span className="font-semibold">{currentPage}</span> of{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </div>
+
+            <div className="flex justify-center items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+              >
+                ←
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`px-3 py-1 rounded text-sm border ${
+                    currentPage === i + 1
+                      ? "bg-[#ff8200] text-white border-[#ff8200]"
+                      : "hover:bg-gray-100"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+              >
+                →
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-600">Rows:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="border rounded px-2 py-1"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
     </div>

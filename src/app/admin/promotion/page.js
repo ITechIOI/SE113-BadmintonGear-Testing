@@ -5,86 +5,54 @@ import { getAllPromotions, deletePromotionById } from "@/api/promotionApi";
 import { useRouter } from "next/navigation";
 
 export default function PromotionPage() {
-  const [isAllChecked, setIsAllChecked] = useState(false); // Trạng thái checkbox của thead
+  const [isAllChecked, setIsAllChecked] = useState(false);
   const [promotions, setPromotions] = useState([]);
-  const [displayedPromotions, setDisplayedPromotions] = useState([]);
   const [isCheck, setIsCheck] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const router = useRouter();
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
 
+  const router = useRouter();
   const filterRef = useRef(null);
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (filterRef.current && !filterRef.current.contains(event.target)) {
-        setShowFilter(false);
-      }
-    }
-    if (showFilter) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showFilter]);
+  // ⬇️ Pagination state (server-side)
+  const [currentPage, setCurrentPage] = useState(1); // UI 1-based
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const handleSelectAll = () => {
-    const newCheckedState = !isAllChecked;
-    setIsAllChecked(newCheckedState);
-    setPromotions(
-      promotions.map((promotion) => ({
-        ...promotion,
-        isChecked: newCheckedState,
-      }))
-    );
-    setDisplayedPromotions(
-      promotions.map((promotion) => ({
-        ...promotion,
-        isChecked: newCheckedState,
-      }))
-    );
-  };
+  // ⬇️ Client filtering/search mode
+  const [isClientFiltering, setIsClientFiltering] = useState(false);
+  const [clientData, setClientData] = useState([]); // full dữ liệu sau khi filter/search (để tự phân trang client)
 
-  const handlePromotionCheck = (id) => {
-    const updatedPromotions = promotions.map((promotion) =>
-      promotion.id === id
-        ? { ...promotion, isChecked: !promotion.isChecked }
-        : promotion
-    );
-    setPromotions(updatedPromotions);
-    setDisplayedPromotions(updatedPromotions);
-    const allChecked = updatedPromotions.every(
-      (promotion) => promotion.isChecked
-    );
-    setIsAllChecked(allChecked);
-  };
-
-  const fetchPromotions = async () => {
-    const data = await getAllPromotions();
-    if (data) {
-      console.log("Fetched promotions:", data);
-      setPromotions(
-        data.map((promotion) => ({ ...promotion, isChecked: false }))
-      );
-      setDisplayedPromotions(
-        data.map((promotion) => ({ ...promotion, isChecked: false }))
-      );
+  const fetchPromotions = async (page = currentPage, limit = rowsPerPage) => {
+    const result = await getAllPromotions(page - 1, limit); // API 0-based
+    if (result) {
+      setPromotions(result.content.map((p) => ({ ...p, isChecked: false })));
+      setTotalPages(result.totalPages || 1);
+      setTotalElements(result.totalElements || 0);
+      setIsAllChecked(false);
     } else {
       console.error("Failed to fetch promotions");
     }
   };
 
   const fetchDeletePromotion = async (id) => {
-    const response = await deletePromotionById(id);
-    if (response) {
-      fetchPromotions(); // Refresh the list after deletion
+    const ok = await deletePromotionById(id);
+    if (ok) {
+      // nếu đang filter client thì xóa local luôn, ngược lại refetch server page hiện tại
+      if (isClientFiltering) {
+        const next = clientData.filter((x) => x.id !== id);
+        setClientData(next);
+        const newTotalPages = Math.max(1, Math.ceil(next.length / rowsPerPage));
+        setTotalPages(newTotalPages);
+        const start = (currentPage - 1) * rowsPerPage;
+        setPromotions(next.slice(start, start + rowsPerPage));
+      } else {
+        fetchPromotions(currentPage, rowsPerPage);
+      }
       return true;
-    } else {
-      console.error("Failed to delete promotion");
-      return false;
     }
+    console.error("Failed to delete promotion");
+    return false;
   };
 
   const handleDeletePromotion = (id) => {
@@ -93,60 +61,126 @@ export default function PromotionPage() {
     }
   };
 
-  const handleFilterChange = (e) => {
-    const value = e.target.value;
-    if (value === "") {
-      setDisplayedPromotions(promotions);
-    } else {
-      const filteredPromotions = promotions.filter(
-        (promotion) => promotion.status === value
-      );
-      setDisplayedPromotions(filteredPromotions);
-    }
+  const handleSelectAll = () => {
+    const newCheckedState = !isAllChecked;
+    setIsAllChecked(newCheckedState);
+    setPromotions((prev) =>
+      prev.map((promotion) => ({
+        ...promotion,
+        isChecked: newCheckedState,
+      }))
+    );
+  };
+
+  const handlePromotionCheck = (id) => {
+    const updated = promotions.map((promotion) =>
+      promotion.id === id
+        ? { ...promotion, isChecked: !promotion.isChecked }
+        : promotion
+    );
+    setPromotions(updated);
+    setIsAllChecked(updated.every((p) => p.isChecked));
   };
 
   const handleDeleteCheckedPromotions = () => {
-    const checkedPromotions = promotions.filter(
-      (promotion) => promotion.isChecked
-    );
-    if (checkedPromotions.length === 0) {
+    const checked = promotions.filter((p) => p.isChecked);
+    if (checked.length === 0) {
       alert("No promotions selected for deletion.");
       return;
     }
     if (
       window.confirm(
-        `Are you sure you want to delete ${checkedPromotions.length} promotions?`
+        `Are you sure you want to delete ${checked.length} promotions?`
       )
     ) {
-      checkedPromotions.forEach((promotion) => {
-        if (fetchDeletePromotion(promotion.id)) {
-          console.log(`Deleted promotion with ID: ${promotion.id}`);
-        } else {
-          console.log(`Failed to delete promotion with ID: ${promotion.id}`);
-        }
-      });
+      checked.forEach((promotion) => fetchDeletePromotion(promotion.id));
     }
   };
 
-  const handleSearchChange = (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const filteredPromotions = promotions.filter(
-      (promotion) =>
-        promotion.code.toLowerCase().includes(searchTerm) ||
-        promotion.id.toString().includes(searchTerm)
-    );
-    setDisplayedPromotions(filteredPromotions);
+  // ✅ Search: chuyển sang client mode (lấy full rồi filter + phân trang client)
+  const handleSearchChange = async (e) => {
+    const term = e.target.value.trim().toLowerCase();
+
+    if (!term) {
+      setIsClientFiltering(false);
+      setCurrentPage(1);
+      await fetchPromotions(1, rowsPerPage);
+      return;
+    }
+
+    const all = await getAllPromotions(0, Math.max(totalElements, rowsPerPage));
+    if (all) {
+      const filtered = (all.content || []).filter(
+        (p) =>
+          p.code?.toLowerCase().includes(term) ||
+          String(p.id || "").includes(term)
+      );
+      const normalized = filtered.map((p) => ({ ...p, isChecked: false }));
+      setIsClientFiltering(true);
+      setClientData(normalized);
+      setCurrentPage(1);
+      const newTotalPages = Math.max(
+        1,
+        Math.ceil(normalized.length / rowsPerPage)
+      );
+      setTotalPages(newTotalPages);
+      setPromotions(normalized.slice(0, rowsPerPage));
+      setIsAllChecked(false);
+    }
   };
 
+  // ✅ Filter: giống search — client mode nếu chọn khác "All"
+  const handleFilterChange = async (e) => {
+    const value = e.target.value;
+
+    if (!value) {
+      // Back to server pagination
+      setIsClientFiltering(false);
+      setCurrentPage(1);
+      await fetchPromotions(1, rowsPerPage);
+      return;
+    }
+
+    const all = await getAllPromotions(0, Math.max(totalElements, rowsPerPage));
+    if (all) {
+      const filtered = (all.content || []).filter((p) => p.status === value);
+      const normalized = filtered.map((p) => ({ ...p, isChecked: false }));
+      setIsClientFiltering(true);
+      setClientData(normalized);
+      setCurrentPage(1);
+      const newTotalPages = Math.max(
+        1,
+        Math.ceil(normalized.length / rowsPerPage)
+      );
+      setTotalPages(newTotalPages);
+      setPromotions(normalized.slice(0, rowsPerPage));
+      setIsAllChecked(false);
+    }
+  };
+
+  // load lần đầu (server mode)
   useEffect(() => {
-    fetchPromotions();
+    fetchPromotions(1, rowsPerPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // theo dõi tick chọn / ẩn hiện nút Delete
   useEffect(() => {
-    const anyChecked = promotions.some((promotion) => promotion.isChecked);
-    setIsCheck(anyChecked);
-    setDisplayedPromotions(promotions);
+    setIsCheck(promotions.some((p) => p.isChecked));
   }, [promotions]);
+
+  // Đồng bộ dữ liệu khi chuyển trang / đổi rowsPerPage
+  useEffect(() => {
+    if (isClientFiltering) {
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      setPromotions(clientData.slice(start, end));
+      setIsAllChecked(false);
+    } else {
+      fetchPromotions(currentPage, rowsPerPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, rowsPerPage, isClientFiltering]);
 
   return (
     <div className="font-inter">
@@ -355,7 +389,7 @@ export default function PromotionPage() {
             </tr>
           </thead>
           <tbody className="text-[#344054] font-normal text-center">
-            {displayedPromotions.map((promotion) => (
+            {promotions.map((promotion) => (
               <AdminPromotionItem
                 key={promotion.id}
                 promotion={promotion}
@@ -365,7 +399,62 @@ export default function PromotionPage() {
             ))}
           </tbody>
         </table>
-        {/* Pagination*/}
+
+        {/* Pagination */}
+        <div className="flex justify-between items-center mt-5 px-6 py-4 bg-[#F9FAFB]">
+          <div className="text-gray-600 text-sm">
+            Page <span className="font-semibold">{currentPage}</span> of{" "}
+            <span className="font-semibold">{totalPages || 1}</span>
+          </div>
+
+          <div className="flex justify-center items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+            >
+              ←
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded text-sm border ${
+                  currentPage === i + 1
+                    ? "bg-[#ff8200] text-white border-[#ff8200]"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+            >
+              →
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-600">Rows:</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="border rounded px-2 py-1"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   );

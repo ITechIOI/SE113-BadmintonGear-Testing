@@ -5,11 +5,19 @@ import { useRouter } from "next/navigation";
 export default function FlashSalePage() {
   const [isAllChecked, setIsAllChecked] = useState(false);
   const [flashSales, setFlashSales] = useState([]);
-  const [displayedFlashSales, setDisplayedFlashSales] = useState([]);
   const [isCheck, setIsCheck] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1); // UI dùng 1-based
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+
   const filterRef = useRef(null);
   const router = useRouter();
+
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -27,12 +35,14 @@ export default function FlashSalePage() {
     };
   }, [showFilter]);
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-
-  const fetchAllFlashSales = async () => {
+  const fetchAllFlashSales = async (
+    page = currentPage,
+    limit = rowsPerPage
+  ) => {
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale/all`;
+      const url = `${
+        process.env.NEXT_PUBLIC_API_URL
+      }/products/flash-sale/all?page=${page - 1}&limit=${limit}`;
       const res = await fetch(url, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
@@ -47,7 +57,8 @@ export default function FlashSalePage() {
         isChecked: false,
       }));
       setFlashSales(list);
-      setDisplayedFlashSales(list);
+      setTotalPages(data?.data?.totalPages ?? 1);
+      setIsAllChecked(false);
     } catch (e) {
       console.error("Error fetching flash sales:", e);
     }
@@ -80,7 +91,6 @@ export default function FlashSalePage() {
       isChecked: newCheckedState,
     }));
     setFlashSales(updated);
-    setDisplayedFlashSales(updated);
   };
 
   const handleCheck = (id) => {
@@ -88,7 +98,6 @@ export default function FlashSalePage() {
       fs.id === id ? { ...fs, isChecked: !fs.isChecked } : fs
     );
     setFlashSales(updated);
-    setDisplayedFlashSales(updated);
     setIsAllChecked(updated.every((fs) => fs.isChecked));
   };
 
@@ -103,32 +112,38 @@ export default function FlashSalePage() {
         // eslint-disable-next-line no-await-in-loop
         await deleteFlashSale(item.id);
       }
-      fetchAllFlashSales();
+      fetchAllFlashSales(currentPage, rowsPerPage);
     }
   };
 
   const handleDeleteOne = async (id) => {
     if (window.confirm("Delete this flash sale?")) {
       const ok = await deleteFlashSale(id);
-      if (ok) fetchAllFlashSales();
+      if (ok) fetchAllFlashSales(currentPage, rowsPerPage);
     }
   };
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = async (e) => {
     const term = e.target.value.toLowerCase().trim();
-
     if (!term) {
-      setDisplayedFlashSales(flashSales);
+      fetchAllFlashSales(currentPage, rowsPerPage);
       return;
     }
 
-    const filtered = flashSales.filter((fs) => {
+    // Search bằng cách lấy hết rồi filter (hoặc backend hỗ trợ search thì gọi API khác)
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/products/flash-sale/all?page=0&limit=1000`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    const list = (data?.data?.content ?? []).filter((fs) => {
       const name = (fs.name ?? "").toLowerCase();
       const idStr = String(fs.id ?? "");
       return name.includes(term) || idStr.includes(term);
     });
-
-    setDisplayedFlashSales(filtered);
+    setFlashSales(list.map((fs) => ({ ...fs, isChecked: false })));
+    setTotalPages(1);
   };
 
   const computeStatus = (fs) => {
@@ -141,8 +156,8 @@ export default function FlashSalePage() {
   };
 
   useEffect(() => {
-    fetchAllFlashSales();
-  }, []);
+    fetchAllFlashSales(currentPage, rowsPerPage);
+  }, [currentPage, rowsPerPage]);
 
   useEffect(() => {
     setIsCheck(flashSales.some((x) => x.isChecked));
@@ -361,7 +376,7 @@ export default function FlashSalePage() {
             </tr>
           </thead>
           <tbody className="text-[#344054] font-normal text-center">
-            {displayedFlashSales.map((fs) => (
+            {flashSales.map((fs) => (
               <tr key={fs.id} className="border-b border-[#F0F1F3]">
                 <td>
                   <input
@@ -431,7 +446,61 @@ export default function FlashSalePage() {
             ))}
           </tbody>
         </table>
-        {/* Pagination can be added here if backend supports paging */}
+        {/* Pagination UI */}
+        <div className="flex justify-between items-center mt-5 px-6 py-4 bg-[#F9FAFB]">
+          <div className="text-gray-600 text-sm">
+            Page <span className="font-semibold">{currentPage}</span> of{" "}
+            <span className="font-semibold">{totalPages || 1}</span>
+          </div>
+
+          <div className="flex justify-center items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+            >
+              ←
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded text-sm border ${
+                  currentPage === i + 1
+                    ? "bg-[#ff8200] text-white border-[#ff8200]"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded border text-sm hover:bg-gray-100 disabled:opacity-50"
+            >
+              →
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-600">Rows:</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="border rounded px-2 py-1"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   );

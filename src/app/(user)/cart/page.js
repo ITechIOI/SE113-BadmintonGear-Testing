@@ -97,7 +97,7 @@ export default function Cart() {
     const end = Date.parse(promotionData.endTime);
 
     // 1) trạng thái / số lượng còn dùng
-    if (promotionData.status !== "enable") {
+    if (promotionData.status !== "available") {
       alert("This promotion is not active");
       setPromotion(0);
       setDiscount(null);

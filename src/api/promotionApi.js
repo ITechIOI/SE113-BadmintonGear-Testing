@@ -1,6 +1,6 @@
-const getAllPromotions = async () => {
+export const getAllPromotions = async (page = 0, limit = 10) => {
   try {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/orders/discounts/all`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/orders/discounts/all?page=${page}&limit=${limit}`;
     const token = localStorage.getItem("access_token");
     const response = await fetch(url, {
       method: "GET",
@@ -13,7 +13,13 @@ const getAllPromotions = async () => {
       return null;
     }
     const data = await response.json();
-    return data.data.content;
+
+    // API nên trả kiểu: { data: { content: [], totalPages, totalElements } }
+    return {
+      content: data?.data?.content ?? [],
+      totalPages: data?.data?.totalPages ?? 1,
+      totalElements: data?.data?.totalElements ?? 0,
+    };
   } catch (error) {
     console.error("Error fetching promotions:", error);
     return null;
@@ -135,7 +141,6 @@ const updatePromotion = async (promotionId, promotionData) => {
 };
 
 export {
-  getAllPromotions,
   getPromotionById,
   getPromotionByCode,
   deletePromotionById,

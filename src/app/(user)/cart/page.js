@@ -78,28 +78,61 @@ export default function Cart() {
   // };
 
   const getPromotions = async () => {
-    if (couponCode === "") {
+    if (!couponCode) {
       setPromotion(0);
+      setDiscount(null);
       return;
     }
+
     const promotionData = await getPromotionByCode(couponCode);
-    if (promotionData) {
-      console.log("Promotion data:", promotionData);
-      if (subtotal >= promotionData.minOrderValue) {
-        setPromotion(promotionData.percent);
-        setDiscount(promotionData);
-      } else {
-        console.log("Subtotal:", subtotal);
-        console.log("Min order value:", promotionData.minOrderValue);
-        alert(
-          `Minimum order value for this promotion is ${promotionData.minOrderValue.toLocaleString()} $`
-        );
-        setPromotion(0);
-      }
-    } else {
+    if (!promotionData) {
       alert("Invalid coupon code");
       setPromotion(0);
+      setDiscount(null);
+      return;
     }
+
+    const now = Date.now();
+    const start = Date.parse(promotionData.startTime); // "2025-03-13T16:41:43.000+00:00"
+    const end = Date.parse(promotionData.endTime);
+
+    // 1) trạng thái / số lượng còn dùng
+    if (promotionData.status !== "enable") {
+      alert("This promotion is not active");
+      setPromotion(0);
+      setDiscount(null);
+      return;
+    }
+    if (promotionData.count !== undefined && promotionData.count <= 0) {
+      alert("This promotion has no remaining uses");
+      setPromotion(0);
+      setDiscount(null);
+      return;
+    }
+
+    // 2) thời gian hiệu lực
+    if (!(now >= start && now <= end)) {
+      alert("This promotion is expired or not yet active");
+      setPromotion(0);
+      setDiscount(null);
+      return;
+    }
+
+    // 3) điều kiện giá trị tối thiểu
+    if (subtotal < Number(promotionData.minOrderValue || 0)) {
+      alert(
+        `Minimum order value for this promotion is ${Number(
+          promotionData.minOrderValue || 0
+        ).toLocaleString()} $`
+      );
+      setPromotion(0);
+      setDiscount(null);
+      return;
+    }
+
+    // 4) hợp lệ -> áp dụng
+    setPromotion(Number(promotionData.percent || 0));
+    setDiscount(promotionData);
   };
 
   const fetchData = async () => {

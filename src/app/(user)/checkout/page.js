@@ -73,6 +73,8 @@ export default function CheckOut() {
       userId: profile.id,
     };
 
+    console.log("Payment method:", paymentMethod);
+
     if (JSON.stringify(discount) != "{}") {
       console.log("Applying discount:", discount);
       orderData.discountId = discount.id; // Thêm mã giảm giá vào đơn hàng
@@ -109,7 +111,8 @@ export default function CheckOut() {
         paymentMethod: paymentMethod,
         status: "pending",
       };
-      if (paymentMethod === "paypal") {
+      if (paymentMethod === "Paypal") {
+        paymentData.paymentMethod = "paypal";
         const paymentRes = await createPayment(paymentData);
 
         if (paymentRes) {

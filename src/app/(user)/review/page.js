@@ -50,10 +50,10 @@ export default function ReviewPage() {
     }));
   };
 
-  const handleCommentChange = (productId, comment) => {
+  const handleCommentChange = (productId, content) => {
     setReviews((prev) => ({
       ...prev,
-      [productId]: { ...prev[productId], comment },
+      [productId]: { ...prev[productId], content },
     }));
   };
 
@@ -66,14 +66,17 @@ export default function ReviewPage() {
     const reviewData = {
       productId,
       userId,
+      orderId,
       rating: reviews[productId]?.rating || 5,
-      comment: reviews[productId]?.comment || "",
+      content: reviews[productId]?.content || "",
       createdAt: new Date().toISOString(),
     };
 
     const response = await addReview(reviewData);
     if (response) {
-      alert("Review submitted successfully!");
+      // Thông báo review thành công và chuyển hướng sang trang đơn hàng
+      alert("Review submitted successfully");
+      window.location.href = `/user/orders`; // Chuyển hướng sang trang đơn hàng
     } else {
       alert("Failed to submit review");
     }
@@ -128,7 +131,7 @@ export default function ReviewPage() {
                     placeholder="Write your review here..."
                     className="w-full p-3 border rounded-md"
                     rows="3"
-                    value={reviews[product.id]?.comment || ""}
+                    value={reviews[product.id]?.content || ""}
                     onChange={(e) =>
                       handleCommentChange(product.id, e.target.value)
                     }

@@ -36,6 +36,7 @@ const getReviews = async (productId) => {
       return null;
     }
     const data = await response.json();
+    console.log("Fetched Reviews:", data.data.content);
     return data.data.content;
   } catch (error) {
     console.error("Error fetching reviews:", error);

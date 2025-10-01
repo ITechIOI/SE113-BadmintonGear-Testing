@@ -110,7 +110,7 @@ export default function ReviewPage() {
               <div className="flex-1">
                 <h2 className="text-xl font-semibold">{product.name}</h2>
                 <div className="mt-4">
-                  <p className="mb-2">Rating:</p>
+                  <p className="mb-2">Rating:</p> 
                   <div className="flex gap-2 mb-4">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
